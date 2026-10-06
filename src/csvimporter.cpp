@@ -207,6 +207,37 @@ CsvImportResult CsvImporter::importEntries(const QString &filePath) const
             DisciplineType::LaserRun,
             parseBooleanFlag(valueForHeaders(headers, values, {"laserrunenabled", "laserenabled", "laserrun", "laser"}), true));
 
+        const bool importedBonusEnabled = parseBooleanFlag(
+            valueForHeaders(headers, values, {"bonusroundenabled", "bonus_round_enabled"}),
+            false);
+        if (importedBonusEnabled)
+        {
+            result.bonusRoundEnabled = true;
+        }
+
+        const QString bonusRankValue = valueForHeaders(headers, values, {"bonusroundrank", "bonus_round_rank"});
+        if (!bonusRankValue.isEmpty())
+        {
+            bool bonusRankOk = false;
+            const int bonusRank = bonusRankValue.toInt(&bonusRankOk);
+            if (bonusRankOk && bonusRank > 0)
+            {
+                if (competitor.bib.trimmed().isEmpty())
+                {
+                    result.warnings.push_back(QString("Line %1 has bonus round rank but no bib/number; bonus rank skipped.").arg(lineNumber));
+                }
+                else
+                {
+                    result.bonusRoundPlacingsByBib.insert(competitor.bib.trimmed(), bonusRank);
+                    result.bonusRoundEnabled = true;
+                }
+            }
+            else
+            {
+                result.warnings.push_back(QString("Line %1 has invalid bonus round rank '%2'.").arg(lineNumber).arg(bonusRankValue));
+            }
+        }
+
         const QString obstacleTime = valueForHeaders(headers, values, {"ocrtime", "ocr", "obstacletime", "obstacle"});
         if (!obstacleTime.isEmpty())
         {

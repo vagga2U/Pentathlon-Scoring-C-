@@ -9,6 +9,8 @@ struct CsvImportResult
 {
     QVector<Competitor> competitors;
     QStringList warnings;
+    bool bonusRoundEnabled = false;
+    QMap<QString, int> bonusRoundPlacingsByBib;
 };
 
 class CsvImporter

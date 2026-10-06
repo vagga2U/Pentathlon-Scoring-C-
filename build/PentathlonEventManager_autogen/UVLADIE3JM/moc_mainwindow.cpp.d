@@ -4,6 +4,7 @@ C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon\ Tools/Application/Penta
   C:/Qt/6.7.3/mingw_64/include/QtCore/QList \
   C:/Qt/6.7.3/mingw_64/include/QtCore/QMap \
   C:/Qt/6.7.3/mingw_64/include/QtCore/QObject \
+  C:/Qt/6.7.3/mingw_64/include/QtCore/QSet \
   C:/Qt/6.7.3/mingw_64/include/QtCore/QString \
   C:/Qt/6.7.3/mingw_64/include/QtCore/QStringList \
   C:/Qt/6.7.3/mingw_64/include/QtCore/QVector \
@@ -174,6 +175,7 @@ C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon\ Tools/Application/Penta
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/QMainWindow \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/QPushButton \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/QSpinBox \
+  C:/Qt/6.7.3/mingw_64/include/QtWidgets/QStackedWidget \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/QTabWidget \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/QTableWidget \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/QTreeWidget \
@@ -196,6 +198,7 @@ C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon\ Tools/Application/Penta
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/qsizepolicy.h \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/qslider.h \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/qspinbox.h \
+  C:/Qt/6.7.3/mingw_64/include/QtWidgets/qstackedwidget.h \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/qstyle.h \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/qstyleoption.h \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/qtabbar.h \
@@ -414,11 +417,13 @@ C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon\ Tools/Application/Penta
   C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/time.h \
   C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/vadefs.h \
   C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wchar.h \
+  C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon\ Tools/Application/Pentathlon\ Scoring\ C++/src/bonusroundtab.h \
   C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon\ Tools/Application/Pentathlon\ Scoring\ C++/src/csvimporter.h \
   C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon\ Tools/Application/Pentathlon\ Scoring\ C++/src/disciplines.h \
   C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon\ Tools/Application/Pentathlon\ Scoring\ C++/src/disciplinetab.h \
   C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon\ Tools/Application/Pentathlon\ Scoring\ C++/src/eventmodel.h \
   C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon\ Tools/Application/Pentathlon\ Scoring\ C++/src/fencinggrouptab.h \
+  C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon\ Tools/Application/Pentathlon\ Scoring\ C++/src/fencingresultstab.h \
   C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon\ Tools/Application/Pentathlon\ Scoring\ C++/src/finalresultstab.h \
   C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon\ Tools/Application/Pentathlon\ Scoring\ C++/src/ruleset.h \
   C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon\ Tools/Application/Pentathlon\ Scoring\ C++/src/setuptab.h

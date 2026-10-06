@@ -5,6 +5,40 @@
 #include <QLabel>
 #include <QVBoxLayout>
 
+namespace
+{
+class SortableTableItem : public QTableWidgetItem
+{
+public:
+    using QTableWidgetItem::QTableWidgetItem;
+
+    bool operator<(const QTableWidgetItem &other) const override
+    {
+        const QVariant leftSortKey = data(Qt::UserRole + 1);
+        const QVariant rightSortKey = other.data(Qt::UserRole + 1);
+        if (leftSortKey.isValid() && rightSortKey.isValid())
+        {
+            if (leftSortKey.typeId() == QMetaType::Int && rightSortKey.typeId() == QMetaType::Int)
+            {
+                return leftSortKey.toInt() < rightSortKey.toInt();
+            }
+            return leftSortKey.toString() < rightSortKey.toString();
+        }
+        return QTableWidgetItem::operator<(other);
+    }
+};
+
+SortableTableItem *sortableItem(const QString &text, const QVariant &sortKey = QVariant())
+{
+    auto *item = new SortableTableItem(text);
+    if (sortKey.isValid())
+    {
+        item->setData(Qt::UserRole + 1, sortKey);
+    }
+    return item;
+}
+}
+
 FinalResultsTab::FinalResultsTab(QWidget *parent)
     : QWidget(parent)
 {
@@ -31,6 +65,7 @@ FinalResultsTab::FinalResultsTab(QWidget *parent)
     m_table = new QTableWidget(this);
     m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_table->setSortingEnabled(true);
 
     layout->addWidget(toolbar);
     layout->addWidget(m_table, 1);
@@ -48,6 +83,14 @@ void FinalResultsTab::setDivisionSelection(const DivisionSelection &selection)
 
 void FinalResultsTab::populate(const QVector<Competitor> &rankedCompetitors, const EventModel &eventModel, const QList<DisciplineType> &selectedDisciplines)
 {
+    const int sortColumn = m_table->horizontalHeader()->sortIndicatorSection();
+    const Qt::SortOrder sortOrder = m_table->horizontalHeader()->sortIndicatorOrder();
+    const bool sortingWasEnabled = m_table->isSortingEnabled();
+    if (sortingWasEnabled)
+    {
+        m_table->setSortingEnabled(false);
+    }
+
     const QList<DisciplineType> disciplines = selectedDisciplines.isEmpty()
         ? allDisciplines()
         : selectedDisciplines;
@@ -67,19 +110,34 @@ void FinalResultsTab::populate(const QVector<Competitor> &rankedCompetitors, con
     for (int row = 0; row < rankedCompetitors.size(); ++row)
     {
         const Competitor &competitor = rankedCompetitors.at(row);
-        m_table->setItem(row, 0, new QTableWidgetItem(QString::number(rank++)));
-        m_table->setItem(row, 1, new QTableWidgetItem(eventModel.divisionKeyForCompetitor(competitor, currentDivisionFromCombo(m_primaryCombo))));
-        m_table->setItem(row, 2, new QTableWidgetItem(eventModel.divisionKeyForCompetitor(competitor, currentDivisionFromCombo(m_secondaryCombo))));
-        m_table->setItem(row, 3, new QTableWidgetItem(competitor.displayName()));
-        m_table->setItem(row, 4, new QTableWidgetItem(competitor.gender));
-        m_table->setItem(row, 5, new QTableWidgetItem(competitor.category));
+        const QString primaryGroup = eventModel.divisionKeyForCompetitor(competitor, currentDivisionFromCombo(m_primaryCombo));
+        const QString secondaryGroup = eventModel.divisionKeyForCompetitor(competitor, currentDivisionFromCombo(m_secondaryCombo));
+
+        m_table->setItem(row, 0, sortableItem(QString::number(rank), rank));
+        m_table->setItem(row, 1, sortableItem(primaryGroup, primaryGroup.toLower()));
+        m_table->setItem(row, 2, sortableItem(secondaryGroup, secondaryGroup.toLower()));
+        m_table->setItem(row, 3, sortableItem(competitor.displayName(), competitor.displayName().toLower()));
+        m_table->setItem(row, 4, sortableItem(competitor.gender, competitor.gender.toLower()));
+        m_table->setItem(row, 5, sortableItem(competitor.category, competitor.category.toLower()));
 
         int column = 6;
         for (const DisciplineType discipline : disciplines)
         {
-            m_table->setItem(row, column++, new QTableWidgetItem(disciplineScoreDisplayValue(competitor, discipline)));
+            const int score = competitor.scores.value(discipline);
+            m_table->setItem(row, column++, sortableItem(disciplineScoreDisplayValue(competitor, discipline), score));
         }
-        m_table->setItem(row, column, new QTableWidgetItem(QString::number(eventModel.competitorTotalScore(competitor))));
+        const int total = eventModel.competitorTotalScore(competitor);
+        m_table->setItem(row, column, sortableItem(QString::number(total), total));
+        ++rank;
+    }
+
+    if (sortingWasEnabled)
+    {
+        m_table->setSortingEnabled(true);
+        if (sortColumn >= 0 && sortColumn < m_table->columnCount())
+        {
+            m_table->sortItems(sortColumn, sortOrder);
+        }
     }
 }
 

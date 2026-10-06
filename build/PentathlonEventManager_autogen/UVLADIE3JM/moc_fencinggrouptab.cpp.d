@@ -163,6 +163,7 @@ C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon\ Tools/Application/Penta
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/QLabel \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/QPushButton \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/QSpinBox \
+  C:/Qt/6.7.3/mingw_64/include/QtWidgets/QTableWidget \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/QTreeWidget \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/QWidget \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/qabstractbutton.h \
@@ -181,6 +182,8 @@ C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon\ Tools/Application/Penta
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/qstyle.h \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/qstyleoption.h \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/qtabbar.h \
+  C:/Qt/6.7.3/mingw_64/include/QtWidgets/qtableview.h \
+  C:/Qt/6.7.3/mingw_64/include/QtWidgets/qtablewidget.h \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/qtabwidget.h \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/qtreeview.h \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/qtreewidget.h \

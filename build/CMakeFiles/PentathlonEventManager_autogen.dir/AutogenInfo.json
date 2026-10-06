@@ -241,6 +241,12 @@
 	"HEADERS" : 
 	[
 		[
+			"C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/src/bonusroundtab.h",
+			"MU",
+			"UVLADIE3JM/moc_bonusroundtab.cpp",
+			null
+		],
+		[
 			"C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/src/csvimporter.h",
 			"MU",
 			"UVLADIE3JM/moc_csvimporter.cpp",
@@ -268,6 +274,12 @@
 			"C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/src/fencinggrouptab.h",
 			"MU",
 			"UVLADIE3JM/moc_fencinggrouptab.cpp",
+			null
+		],
+		[
+			"C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/src/fencingresultstab.h",
+			"MU",
+			"UVLADIE3JM/moc_fencingresultstab.cpp",
 			null
 		],
 		[
@@ -371,6 +383,11 @@
 	"SOURCES" : 
 	[
 		[
+			"C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/src/bonusroundtab.cpp",
+			"MU",
+			null
+		],
+		[
 			"C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/src/csvimporter.cpp",
 			"MU",
 			null
@@ -387,6 +404,11 @@
 		],
 		[
 			"C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/src/fencinggrouptab.cpp",
+			"MU",
+			null
+		],
+		[
+			"C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/src/fencingresultstab.cpp",
 			"MU",
 			null
 		],

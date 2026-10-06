@@ -20,6 +20,7 @@
 #include <QSet>
 #include <QPageLayout>
 #include <QPageSize>
+#include <QRegularExpression>
 
 #include <algorithm>
 #include <cstdlib>
@@ -207,6 +208,194 @@ std::optional<int> integerPenaltyValue(const QString &penalty)
     return std::abs(parsed);
 }
 
+QMap<QString, int> parseFencingMatrixRowRaw(const QString &raw)
+{
+    QMap<QString, int> scoresByOpponentBib;
+    if (raw.trimmed().isEmpty())
+    {
+        return scoresByOpponentBib;
+    }
+
+    const QJsonDocument document = QJsonDocument::fromJson(raw.toUtf8());
+    if (!document.isObject())
+    {
+        return scoresByOpponentBib;
+    }
+
+    const QJsonObject matrix = document.object().value("matrix").toObject();
+    for (auto it = matrix.begin(); it != matrix.end(); ++it)
+    {
+        if (it.value().isDouble())
+        {
+            scoresByOpponentBib.insert(it.key(), std::max(0, it.value().toInt()));
+        }
+    }
+    return scoresByOpponentBib;
+}
+
+struct FencingScoreRule
+{
+    int bouts = 0;
+    int victoryValue = 0;
+};
+
+QString existingTablePath(const QStringList &fileNames)
+{
+    QStringList candidatePaths;
+    for (const QString &fileName : fileNames)
+    {
+        candidatePaths.push_back(QDir::current().absoluteFilePath(fileName));
+        candidatePaths.push_back(QDir(QCoreApplication::applicationDirPath()).absoluteFilePath(QString("../%1").arg(fileName)));
+        candidatePaths.push_back(QDir(QCoreApplication::applicationDirPath()).absoluteFilePath(QString("../../%1").arg(fileName)));
+    }
+
+    for (const QString &candidatePath : candidatePaths)
+    {
+        if (QFileInfo::exists(candidatePath))
+        {
+            return candidatePath;
+        }
+    }
+    return {};
+}
+
+QMap<int, FencingScoreRule> loadFencingScoringTable()
+{
+    const QString tablePath = existingTablePath({"samples/FencingScoring.csv"});
+
+    QMap<int, FencingScoreRule> rulesByBouts;
+    if (tablePath.isEmpty())
+    {
+        return rulesByBouts;
+    }
+
+    QFile file(tablePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        return rulesByBouts;
+    }
+
+    QTextStream stream(&file);
+    bool isFirstRow = true;
+    while (!stream.atEnd())
+    {
+        QString line = stream.readLine().trimmed();
+        if (line.isEmpty())
+        {
+            continue;
+        }
+
+        if (isFirstRow)
+        {
+            isFirstRow = false;
+            if (line.startsWith(QChar(0xFEFF)))
+            {
+                line.remove(0, 1);
+            }
+            continue;
+        }
+
+        const QStringList columns = line.split(',', Qt::KeepEmptyParts);
+        if (columns.size() < 2)
+        {
+            continue;
+        }
+
+        bool boutsOk = false;
+        bool valueOk = false;
+        const int bouts = columns.at(0).trimmed().toInt(&boutsOk);
+        const int victoryValue = columns.at(1).trimmed().toInt(&valueOk);
+        if (!boutsOk || !valueOk || bouts <= 0 || victoryValue <= 0)
+        {
+            continue;
+        }
+
+        rulesByBouts.insert(bouts, FencingScoreRule{bouts, victoryValue});
+    }
+
+    return rulesByBouts;
+}
+
+int fencingLinearScoreFromVictories(int victories, int bouts)
+{
+    if (victories <= 0 || bouts <= 0)
+    {
+        return 0;
+    }
+
+    static const QMap<int, FencingScoreRule> rulesByBouts = loadFencingScoringTable();
+    const int targetVictoriesFor250 = static_cast<int>(std::lround(static_cast<double>(bouts) * 0.7));
+    const int denominator = std::max(1, bouts - targetVictoriesFor250);
+
+    int victoryValue = 0;
+    if (rulesByBouts.contains(bouts))
+    {
+        victoryValue = rulesByBouts.value(bouts).victoryValue;
+    }
+    else
+    {
+        victoryValue = std::max(1, static_cast<int>(std::lround(50.0 / static_cast<double>(denominator))));
+    }
+
+    const int score = 250 + ((victories - targetVictoriesFor250) * victoryValue);
+    return std::max(0, score);
+}
+
+QMap<int, int> loadBonusRoundScoringTable()
+{
+    const QString tablePath = existingTablePath({"samples/fencingDE.csv", "samples/FencingDE.csv"});
+    QMap<int, int> scoreByRank;
+    if (tablePath.isEmpty())
+    {
+        return scoreByRank;
+    }
+
+    QFile file(tablePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        return scoreByRank;
+    }
+
+    QTextStream stream(&file);
+    bool isFirstRow = true;
+    while (!stream.atEnd())
+    {
+        QString line = stream.readLine().trimmed();
+        if (line.isEmpty())
+        {
+            continue;
+        }
+
+        if (isFirstRow)
+        {
+            isFirstRow = false;
+            if (line.startsWith(QChar(0xFEFF)))
+            {
+                line.remove(0, 1);
+            }
+            continue;
+        }
+
+        const QStringList columns = line.split(',', Qt::KeepEmptyParts);
+        if (columns.size() < 2)
+        {
+            continue;
+        }
+
+        bool rankOk = false;
+        bool scoreOk = false;
+        const int rank = columns.at(0).trimmed().toInt(&rankOk);
+        const int score = columns.at(1).trimmed().toInt(&scoreOk);
+        if (!rankOk || !scoreOk || rank <= 0)
+        {
+            continue;
+        }
+        scoreByRank.insert(rank, score);
+    }
+
+    return scoreByRank;
+}
+
 int divisionToInt(ResultDivision division)
 {
     return static_cast<int>(division);
@@ -386,6 +575,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_tabWidget->addTab(m_setupTab, "Setup");
     m_tabWidget->addTab(m_finalResultsTab, "Final Results");
+    m_lastActiveTab = m_setupTab;
 
     connect(m_setupTab, &SetupTab::eventDetailsSubmitted, this, &MainWindow::applyEventDetails);
     connect(m_setupTab, &SetupTab::importEntriesRequested, this, &MainWindow::importEntries);
@@ -400,6 +590,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_eventModel, &EventModel::changed, this, &MainWindow::saveState);
     connect(m_finalResultsTab, &FinalResultsTab::divisionSelectionChanged, &m_eventModel, &EventModel::setDivisionSelection);
     connect(m_finalResultsTab, &FinalResultsTab::printRequested, this, &MainWindow::printFinalResults);
+    connect(m_tabWidget, &QTabWidget::currentChanged, this, &MainWindow::handleTabChanged);
 
     loadState();
     refreshDisciplineTabs();
@@ -429,6 +620,26 @@ void MainWindow::importEntries(const QString &csvPath)
     {
         recalculateDiscipline(discipline);
     }
+
+    QMap<QString, int> importedPlacings;
+    const QVector<Competitor> importedCompetitors = m_eventModel.competitors();
+    for (const Competitor &competitor : importedCompetitors)
+    {
+        const QString bib = competitor.bib.trimmed();
+        if (bib.isEmpty())
+        {
+            continue;
+        }
+        if (result.bonusRoundPlacingsByBib.contains(bib))
+        {
+            importedPlacings.insert(bib, result.bonusRoundPlacingsByBib.value(bib));
+        }
+    }
+    m_bonusRoundPlacingsByBib = importedPlacings;
+    m_bonusRoundEnabled = result.bonusRoundEnabled || !m_bonusRoundPlacingsByBib.isEmpty();
+    refreshDisciplineTabs();
+    refreshViews();
+    saveState();
 
     if (!result.warnings.isEmpty())
     {
@@ -536,13 +747,141 @@ void MainWindow::autoAssignFencingGroups(int numberPistes)
 
     if (m_fencingGroupTab != nullptr)
     {
+        QString estimatedRuntimeSegment;
+        const int estimatedMinutes = m_fencingGroupTab->estimatedRuntimeMinutes();
+        const int estimatedRounds = m_fencingGroupTab->estimatedRoundCount();
+        const int maxBoutsPerPistePerRound = m_fencingGroupTab->maxBoutsPerPistePerRound();
+        if (estimatedRounds > 0 && maxBoutsPerPistePerRound > 0)
+        {
+            const int hours = estimatedMinutes / 60;
+            const int minutes = estimatedMinutes % 60;
+            QString durationText = QString("%1 min").arg(estimatedMinutes);
+            if (hours > 0)
+            {
+                durationText += QString(" (%1h %2m)").arg(hours).arg(minutes, 2, 10, QChar('0'));
+            }
+
+            estimatedRuntimeSegment = QString(
+                " Estimated runtime: %1 (2 min × %2 rounds × max %3 bouts/piste/round + 1 min × %2 rounds).")
+                .arg(durationText)
+                .arg(estimatedRounds)
+                .arg(maxBoutsPerPistePerRound);
+        }
+
         m_fencingGroupTab->setStatusMessage(
-            QString("Assigned %1 fencers into %2 group(s) using %3 piste(s).")
+            QString("Assigned %1 fencers into %2 group(s) using %3 piste(s).%4")
                 .arg(assignedCount)
                 .arg(highestGroup)
-                .arg(numberPistes),
+                .arg(numberPistes)
+                .arg(estimatedRuntimeSegment),
             false);
     }
+}
+
+void MainWindow::exportFencingGroupListPdf()
+{
+    const EventDetails &details = m_eventModel.eventDetails();
+    QString defaultName = details.eventName.trimmed();
+    if (defaultName.isEmpty())
+    {
+        defaultName = "fencing-group-list";
+    }
+    defaultName = defaultName.toLower().replace(' ', '-');
+    const QString datedName = QString("%1-%2-fencing-group-list.pdf")
+        .arg(defaultName, details.eventDate.isValid() ? details.eventDate.toString("yyyyMMdd") : QDate::currentDate().toString("yyyyMMdd"));
+
+    const QString outputPath = QFileDialog::getSaveFileName(
+        this,
+        "Export Fencing Group List PDF",
+        QDir::home().filePath(datedName),
+        "PDF Files (*.pdf)");
+    if (outputPath.trimmed().isEmpty())
+    {
+        return;
+    }
+
+    QPrinter printer;
+    printer.setOutputFormat(QPrinter::PdfFormat);
+    printer.setPageSize(QPageSize(QPageSize::A4));
+    printer.setPageOrientation(QPageLayout::Landscape);
+    printer.setPageMargins(QMarginsF(10, 12, 10, 12), QPageLayout::Millimeter);
+    printer.setOutputFileName(outputPath);
+
+    QTextDocument document;
+    document.setHtml(fencingGroupListHtml());
+    document.print(&printer);
+
+    QMessageBox::information(this, "Fencing Group List PDF", QString("Fencing group list exported to:\n%1").arg(outputPath));
+}
+
+void MainWindow::exportFencingRoundSheetsPdf()
+{
+    const EventDetails &details = m_eventModel.eventDetails();
+    QString defaultName = details.eventName.trimmed();
+    if (defaultName.isEmpty())
+    {
+        defaultName = "fencing-round-sheets";
+    }
+    defaultName = defaultName.toLower().replace(' ', '-');
+    const QString datedName = QString("%1-%2-fencing-round-sheets.pdf")
+        .arg(defaultName, details.eventDate.isValid() ? details.eventDate.toString("yyyyMMdd") : QDate::currentDate().toString("yyyyMMdd"));
+
+    const QString outputPath = QFileDialog::getSaveFileName(
+        this,
+        "Export Fencing Round Sheets PDF",
+        QDir::home().filePath(datedName),
+        "PDF Files (*.pdf)");
+    if (outputPath.trimmed().isEmpty())
+    {
+        return;
+    }
+
+    QPrinter printer;
+    printer.setOutputFormat(QPrinter::PdfFormat);
+    printer.setPageSize(QPageSize(QPageSize::A4));
+    printer.setPageMargins(QMarginsF(10, 12, 10, 12), QPageLayout::Millimeter);
+    printer.setOutputFileName(outputPath);
+
+    QTextDocument document;
+    document.setHtml(fencingRoundSheetsHtml());
+    document.print(&printer);
+
+    QMessageBox::information(this, "Fencing Round Sheets PDF", QString("Fencing round sheets exported to:\n%1").arg(outputPath));
+}
+
+void MainWindow::exportBonusBracketSheetPdf()
+{
+    const EventDetails &details = m_eventModel.eventDetails();
+    QString defaultName = details.eventName.trimmed();
+    if (defaultName.isEmpty())
+    {
+        defaultName = "bonus-round-bracket";
+    }
+    defaultName = defaultName.toLower().replace(' ', '-');
+    const QString datedName = QString("%1-%2-bonus-round-bracket.pdf")
+        .arg(defaultName, details.eventDate.isValid() ? details.eventDate.toString("yyyyMMdd") : QDate::currentDate().toString("yyyyMMdd"));
+
+    const QString outputPath = QFileDialog::getSaveFileName(
+        this,
+        "Export Bonus Round Bracket PDF",
+        QDir::home().filePath(datedName),
+        "PDF Files (*.pdf)");
+    if (outputPath.trimmed().isEmpty())
+    {
+        return;
+    }
+
+    QPrinter printer;
+    printer.setOutputFormat(QPrinter::PdfFormat);
+    printer.setPageSize(QPageSize(QPageSize::A4));
+    printer.setPageMargins(QMarginsF(10, 12, 10, 12), QPageLayout::Millimeter);
+    printer.setOutputFileName(outputPath);
+
+    QTextDocument document;
+    document.setHtml(bonusBracketSheetHtml());
+    document.print(&printer);
+
+    QMessageBox::information(this, "Bonus Round Bracket PDF", QString("Bonus round bracket sheet exported to:\n%1").arg(outputPath));
 }
 
 void MainWindow::updateLaneAssignment(DisciplineType discipline, int competitorIndex, int heat, int lane)
@@ -562,6 +901,310 @@ void MainWindow::updatePenalty(DisciplineType discipline, int competitorIndex, c
     recalculateCompetitorScores(competitorIndex);
 }
 
+void MainWindow::updateFencingRawResult(int competitorIndex, const QString &rawResult)
+{
+    m_pendingFencingRecalculation = true;
+    m_eventModel.updateRawResult(competitorIndex, DisciplineType::Fencing, rawResult);
+}
+
+void MainWindow::updateFencingPenalty(int competitorIndex, const QString &penalty)
+{
+    m_pendingFencingRecalculation = true;
+    m_eventModel.updatePenalty(competitorIndex, DisciplineType::Fencing, penalty);
+}
+
+void MainWindow::recalculateFencingResults()
+{
+    m_fencingPairLimit = pairLimitForFencing();
+    m_pendingFencingRecalculation = false;
+    recalculateFencingRankingScores();
+}
+
+void MainWindow::setBonusRoundEnabled(bool enabled)
+{
+    if (m_bonusRoundEnabled == enabled)
+    {
+        return;
+    }
+
+    m_bonusRoundEnabled = enabled;
+    if (!m_bonusRoundEnabled)
+    {
+        m_bonusRoundPlacingsByBib.clear();
+        recalculateFencingRankingScores();
+    }
+
+    refreshDisciplineTabs();
+    refreshViews();
+    saveState();
+}
+
+void MainWindow::updateBonusRoundPlacings(const QMap<int, int> &placementsByCompetitorIndex)
+{
+    QMap<QString, int> placingsByBib;
+    const QVector<Competitor> competitors = m_eventModel.competitors();
+    for (auto it = placementsByCompetitorIndex.begin(); it != placementsByCompetitorIndex.end(); ++it)
+    {
+        const int index = it.key();
+        if (index < 0 || index >= competitors.size())
+        {
+            continue;
+        }
+        placingsByBib.insert(competitors.at(index).bib.trimmed(), it.value());
+    }
+
+    const bool changed = placingsByBib != m_bonusRoundPlacingsByBib;
+    m_bonusRoundPlacingsByBib = placingsByBib;
+    m_pendingFencingRecalculation = false;
+    if (m_bonusRoundEnabled)
+    {
+        refreshViews();
+    }
+    if (changed)
+    {
+        saveState();
+    }
+}
+
+void MainWindow::handleTabChanged(int index)
+{
+    QWidget *newTab = m_tabWidget->widget(index);
+    const bool leavingFencingWorkflow = (m_lastActiveTab == m_fencingResultsTab || m_lastActiveTab == m_bonusRoundTab)
+        && newTab != m_fencingResultsTab
+        && newTab != m_bonusRoundTab;
+
+    if (leavingFencingWorkflow)
+    {
+        if (m_bonusRoundTab != nullptr)
+        {
+            m_bonusRoundTab->applyPlacings();
+        }
+        if (m_pendingFencingRecalculation)
+        {
+            recalculateFencingResults();
+        }
+    }
+
+    m_lastActiveTab = newTab;
+}
+
+int MainWindow::pairLimitForFencing() const
+{
+    if (m_fencingResultsTab != nullptr)
+    {
+        return std::clamp(m_fencingResultsTab->pairLimit(), 1, 10);
+    }
+    return std::clamp(m_fencingPairLimit, 1, 10);
+}
+
+QVector<Competitor> MainWindow::competitorsForFinalResults() const
+{
+    QVector<Competitor> competitors = m_eventModel.competitors();
+    if (!m_bonusRoundEnabled)
+    {
+        return competitors;
+    }
+
+    for (int index = 0; index < competitors.size(); ++index)
+    {
+        Competitor &competitor = competitors[index];
+        competitor.scores.insert(DisciplineType::Fencing, computedFencingBonusScore(competitor));
+    }
+    return competitors;
+}
+
+QVector<Competitor> MainWindow::rankedCompetitorsForFinalResults(const DivisionSelection &selection) const
+{
+    auto categorySortKey = [](const QString &category) {
+        const QString normalized = category.trimmed().toLower();
+        if (normalized.isEmpty())
+        {
+            return QString("9-999-unspecified");
+        }
+
+        const QRegularExpression youthPattern("^u\\s*(\\d+)");
+        QRegularExpressionMatch match = youthPattern.match(normalized);
+        if (match.hasMatch())
+        {
+            const int age = match.captured(1).toInt();
+            return QString("0-%1-%2").arg(age, 3, 10, QChar('0')).arg(normalized);
+        }
+
+        if (normalized.contains("junior"))
+        {
+            return QString("1-019-%1").arg(normalized);
+        }
+        if (normalized.contains("senior"))
+        {
+            return QString("1-022-%1").arg(normalized);
+        }
+
+        const QRegularExpression mastersPattern("(\\d+)\\s*\\+");
+        match = mastersPattern.match(normalized);
+        if (match.hasMatch())
+        {
+            const int age = match.captured(1).toInt();
+            return QString("2-%1-%2").arg(age, 3, 10, QChar('0')).arg(normalized);
+        }
+
+        const QRegularExpression numberPattern("(\\d+)");
+        match = numberPattern.match(normalized);
+        if (match.hasMatch())
+        {
+            const int age = match.captured(1).toInt();
+            return QString("1-%1-%2").arg(age, 3, 10, QChar('0')).arg(normalized);
+        }
+
+        return QString("8-999-%1").arg(normalized);
+    };
+
+    auto compareDivision = [this, &categorySortKey](const Competitor &left, const Competitor &right, ResultDivision division) {
+        if (division == ResultDivision::AgeCategory)
+        {
+            const QString leftCategoryKey = categorySortKey(left.category);
+            const QString rightCategoryKey = categorySortKey(right.category);
+            if (leftCategoryKey != rightCategoryKey)
+            {
+                return leftCategoryKey < rightCategoryKey;
+            }
+        }
+
+        const QString leftKey = m_eventModel.divisionKeyForCompetitor(left, division).toLower();
+        const QString rightKey = m_eventModel.divisionKeyForCompetitor(right, division).toLower();
+        if (leftKey != rightKey)
+        {
+            return leftKey < rightKey;
+        }
+
+        return false;
+    };
+
+    QVector<Competitor> ranked = competitorsForFinalResults();
+    std::sort(ranked.begin(), ranked.end(), [this, &selection, &compareDivision](const Competitor &left, const Competitor &right) {
+        if (compareDivision(left, right, selection.primary))
+        {
+            return true;
+        }
+        if (compareDivision(right, left, selection.primary))
+        {
+            return false;
+        }
+
+        if (compareDivision(left, right, selection.secondary))
+        {
+            return true;
+        }
+        if (compareDivision(right, left, selection.secondary))
+        {
+            return false;
+        }
+
+        const int leftTotal = m_eventModel.competitorTotalScore(left);
+        const int rightTotal = m_eventModel.competitorTotalScore(right);
+        if (leftTotal == rightTotal)
+        {
+            return left.displayName().toLower() < right.displayName().toLower();
+        }
+        return leftTotal > rightTotal;
+    });
+    return ranked;
+}
+
+int MainWindow::computedFencingRankingScore(const Competitor &competitor) const
+{
+    if (!competitorParticipatesInDiscipline(competitor, DisciplineType::Fencing))
+    {
+        return 0;
+    }
+
+    if (competitorHasDsq(competitor))
+    {
+        return 0;
+    }
+
+    const QString penalty = competitor.penalties.value(DisciplineType::Fencing).trimmed();
+    if (isElmPenalty(penalty))
+    {
+        return 0;
+    }
+
+    const QVector<Competitor> competitors = m_eventModel.competitors();
+    QVector<const Competitor *> fencingCompetitors;
+    fencingCompetitors.reserve(competitors.size());
+    for (const Competitor &candidate : competitors)
+    {
+        if (competitorParticipatesInDiscipline(candidate, DisciplineType::Fencing))
+        {
+            fencingCompetitors.push_back(&candidate);
+        }
+    }
+
+    const int pairLimit = pairLimitForFencing();
+    const int boutsInCompetition = std::max(0, static_cast<int>(fencingCompetitors.size()) - 1) * pairLimit;
+    const QString selfBib = competitor.bib.trimmed();
+    const QMap<QString, int> selfRow = parseFencingMatrixRowRaw(competitor.rawResults.value(DisciplineType::Fencing));
+
+    int victories = 0;
+    for (const Competitor *opponent : fencingCompetitors)
+    {
+        if (opponent == nullptr || opponent->bib.trimmed() == selfBib)
+        {
+            continue;
+        }
+
+        victories += std::max(0, selfRow.value(opponent->bib.trimmed(), 0));
+    }
+
+    const int baseScore = fencingLinearScoreFromVictories(victories, boutsInCompetition);
+    const auto penaltyValue = integerPenaltyValue(penalty);
+    if (penaltyValue.has_value())
+    {
+        return std::max(0, baseScore - *penaltyValue);
+    }
+    return baseScore;
+}
+
+int MainWindow::computedFencingBonusScore(const Competitor &competitor) const
+{
+    if (!competitorParticipatesInDiscipline(competitor, DisciplineType::Fencing))
+    {
+        return 0;
+    }
+
+    if (competitorHasDsq(competitor))
+    {
+        return 0;
+    }
+
+    const QString penalty = competitor.penalties.value(DisciplineType::Fencing).trimmed();
+    if (isElmPenalty(penalty))
+    {
+        return 0;
+    }
+
+    static const QMap<int, int> scoreByRank = loadBonusRoundScoringTable();
+    const int rank = m_bonusRoundPlacingsByBib.value(competitor.bib.trimmed(), 0);
+    int baseScore = scoreByRank.value(rank, 0);
+    const auto penaltyValue = integerPenaltyValue(penalty);
+    if (penaltyValue.has_value())
+    {
+        baseScore = std::max(0, baseScore - *penaltyValue);
+    }
+    return baseScore;
+}
+
+void MainWindow::recalculateFencingRankingScores()
+{
+    QVector<Competitor> updatedCompetitors = m_eventModel.competitors();
+    for (int index = 0; index < updatedCompetitors.size(); ++index)
+    {
+        updatedCompetitors[index].scores.insert(
+            DisciplineType::Fencing,
+            computedFencingRankingScore(updatedCompetitors.at(index)));
+    }
+    m_eventModel.setCompetitors(updatedCompetitors);
+}
+
 int MainWindow::computedScoreForCompetitor(const Competitor &competitor, DisciplineType discipline, const DisciplineRule *rule) const
 {
     if (!competitorParticipatesInDiscipline(competitor, discipline))
@@ -578,6 +1221,11 @@ int MainWindow::computedScoreForCompetitor(const Competitor &competitor, Discipl
     if (isElmPenalty(penalty))
     {
         return 0;
+    }
+
+    if (discipline == DisciplineType::Fencing)
+    {
+        return computedFencingRankingScore(competitor);
     }
 
     int baseScore = 0;
@@ -752,7 +1400,8 @@ void MainWindow::exportEventCsv()
 
     QStringList headers = {
         "event_name", "event_date", "ruleset", "number", "first_name", "last_name", "gender", "birth_year", "category", "category_override", "affiliation",
-        "fence_enabled", "obstacle_enabled", "swim_enabled", "laser_run_enabled"
+        "fence_enabled", "obstacle_enabled", "swim_enabled", "laser_run_enabled",
+        "bonus_round_enabled", "bonus_round_rank", "bonus_round_score"
     };
     const QList<DisciplineType> disciplines = allDisciplines();
     for (const DisciplineType discipline : disciplines)
@@ -767,8 +1416,13 @@ void MainWindow::exportEventCsv()
     headers << "total_score";
     stream << headers.join(',') << "\n";
 
-    for (const Competitor &competitor : m_eventModel.competitors())
+    const QVector<Competitor> exportCompetitors = competitorsForFinalResults();
+    for (const Competitor &competitor : exportCompetitors)
     {
+        const QString bib = competitor.bib.trimmed();
+        const int bonusRank = m_bonusRoundPlacingsByBib.value(bib, 0);
+        const int bonusScore = bonusRank > 0 ? computedFencingBonusScore(competitor) : 0;
+
         QStringList row = {
             csvEscape(details.eventName),
             csvEscape(details.eventDate.isValid() ? details.eventDate.toString(Qt::ISODate) : QString()),
@@ -784,7 +1438,10 @@ void MainWindow::exportEventCsv()
             csvEscape(competitorParticipatesInDiscipline(competitor, DisciplineType::Fencing) ? "1" : "0"),
             csvEscape(competitorParticipatesInDiscipline(competitor, DisciplineType::Obstacle) ? "1" : "0"),
             csvEscape(competitorParticipatesInDiscipline(competitor, DisciplineType::Swimming) ? "1" : "0"),
-            csvEscape(competitorParticipatesInDiscipline(competitor, DisciplineType::LaserRun) ? "1" : "0")
+            csvEscape(competitorParticipatesInDiscipline(competitor, DisciplineType::LaserRun) ? "1" : "0"),
+            csvEscape(m_bonusRoundEnabled ? "1" : "0"),
+            csvEscape(bonusRank > 0 ? QString::number(bonusRank) : QString()),
+            csvEscape(bonusRank > 0 ? QString::number(bonusScore) : QString())
         };
 
         for (const DisciplineType discipline : disciplines)
@@ -828,6 +1485,8 @@ void MainWindow::clearEventData()
     m_eventModel.setCompetitors({});
     m_eventModel.setDivisionSelection(DivisionSelection{});
     m_eventModel.setEventDetails(details);
+    m_bonusRoundEnabled = false;
+    m_bonusRoundPlacingsByBib.clear();
     refreshDisciplineTabs();
     refreshViews();
 
@@ -839,18 +1498,39 @@ void MainWindow::refreshViews()
     m_setupTab->setEventDetails(m_eventModel.eventDetails());
     m_setupTab->setCompetitorPreview(m_eventModel.competitors());
     m_finalResultsTab->setDivisionSelection(m_eventModel.divisionSelection());
-    m_finalResultsTab->populate(m_eventModel.rankedCompetitors(), m_eventModel, m_eventModel.eventDetails().selectedDisciplines);
+    m_finalResultsTab->populate(
+        rankedCompetitorsForFinalResults(m_eventModel.divisionSelection()),
+        m_eventModel,
+        m_eventModel.eventDetails().selectedDisciplines);
+
+    const QWidget *activeTab = m_tabWidget != nullptr ? m_tabWidget->currentWidget() : nullptr;
+    const bool deferFencingPopulate = m_pendingFencingRecalculation
+        && (activeTab == m_fencingResultsTab || activeTab == m_bonusRoundTab);
+
+    if (m_fencingGroupTab != nullptr)
+    {
+        m_fencingGroupTab->populate(m_eventModel.competitors());
+    }
+
+    if (!deferFencingPopulate && m_fencingResultsTab != nullptr && m_fencingGroupTab != nullptr)
+    {
+        m_fencingResultsTab->setBonusRoundEnabled(m_bonusRoundEnabled);
+        m_fencingResultsTab->setPairLimit(m_fencingPairLimit);
+        m_fencingResultsTab->setRoundSchedule(m_fencingGroupTab->roundScheduleRows());
+        m_fencingResultsTab->populate(m_eventModel.competitors());
+    }
+
+    if (!deferFencingPopulate && m_bonusRoundTab != nullptr && m_fencingResultsTab != nullptr)
+    {
+        m_bonusRoundTab->populate(m_eventModel.competitors(), m_fencingResultsTab->rankedCompetitorIndexes());
+        m_bonusRoundTab->setPlacingsByBib(m_bonusRoundPlacingsByBib);
+    }
 
     const Ruleset *ruleset = currentRuleset();
     for (auto it = m_disciplineTabs.begin(); it != m_disciplineTabs.end(); ++it)
     {
         it.value()->setRuleSummary(ruleset != nullptr ? ruleset->ruleFor(it.key()) : nullptr);
         it.value()->populate(m_eventModel.competitors());
-    }
-
-    if (m_fencingGroupTab != nullptr)
-    {
-        m_fencingGroupTab->populate(m_eventModel.competitors());
     }
 }
 
@@ -880,6 +1560,26 @@ void MainWindow::refreshDisciplineTabs()
         m_fencingGroupTab->deleteLater();
         m_fencingGroupTab = nullptr;
     }
+    if (m_fencingResultsTab != nullptr)
+    {
+        const int index = m_tabWidget->indexOf(m_fencingResultsTab);
+        if (index >= 0)
+        {
+            m_tabWidget->removeTab(index);
+        }
+        m_fencingResultsTab->deleteLater();
+        m_fencingResultsTab = nullptr;
+    }
+    if (m_bonusRoundTab != nullptr)
+    {
+        const int index = m_tabWidget->indexOf(m_bonusRoundTab);
+        if (index >= 0)
+        {
+            m_tabWidget->removeTab(index);
+        }
+        m_bonusRoundTab->deleteLater();
+        m_bonusRoundTab = nullptr;
+    }
 
     for (auto it = m_disciplineTabs.begin(); it != m_disciplineTabs.end(); ++it)
     {
@@ -901,11 +1601,32 @@ void MainWindow::refreshDisciplineTabs()
     {
         m_fencingGroupTab = new FencingGroupTab(this);
         connect(m_fencingGroupTab, &FencingGroupTab::autoAssignGroupsRequested, this, &MainWindow::autoAssignFencingGroups);
+        connect(m_fencingGroupTab, &FencingGroupTab::exportGroupListRequested, this, &MainWindow::exportFencingGroupListPdf);
+        connect(m_fencingGroupTab, &FencingGroupTab::exportRoundSheetsRequested, this, &MainWindow::exportFencingRoundSheetsPdf);
         m_tabWidget->insertTab(insertIndex++, m_fencingGroupTab, "Fencing Groups");
+
+        m_fencingResultsTab = new FencingResultsTab(this);
+        connect(m_fencingResultsTab, &FencingResultsTab::rawResultChanged, this, &MainWindow::updateFencingRawResult);
+        connect(m_fencingResultsTab, &FencingResultsTab::penaltyChanged, this, &MainWindow::updateFencingPenalty);
+        connect(m_fencingResultsTab, &FencingResultsTab::recalculateRequested, this, &MainWindow::recalculateFencingResults, Qt::QueuedConnection);
+        connect(m_fencingResultsTab, &FencingResultsTab::bonusRoundEnabledChanged, this, &MainWindow::setBonusRoundEnabled);
+        m_tabWidget->insertTab(insertIndex++, m_fencingResultsTab, "Fencing Results");
+
+        if (m_bonusRoundEnabled)
+        {
+            m_bonusRoundTab = new BonusRoundTab(this);
+            connect(m_bonusRoundTab, &BonusRoundTab::standingsChanged, this, &MainWindow::updateBonusRoundPlacings);
+            connect(m_bonusRoundTab, &BonusRoundTab::exportBracketSheetRequested, this, &MainWindow::exportBonusBracketSheetPdf);
+            m_tabWidget->insertTab(insertIndex++, m_bonusRoundTab, "Bonus Round");
+        }
     }
 
     for (const DisciplineType discipline : disciplines)
     {
+        if (discipline == DisciplineType::Fencing)
+        {
+            continue;
+        }
         auto *tab = new DisciplineTab(discipline, this);
         connect(tab, &DisciplineTab::assignHeatsRequested, this, &MainWindow::assignHeats);
         connect(tab, &DisciplineTab::laneAssignmentChanged, this, &MainWindow::updateLaneAssignment);
@@ -917,6 +1638,8 @@ void MainWindow::refreshDisciplineTabs()
         m_tabWidget->insertTab(insertIndex++, tab, disciplineDisplayName(discipline));
         m_disciplineTabs.insert(discipline, tab);
     }
+
+    m_lastActiveTab = m_tabWidget->currentWidget();
 }
 
 QString MainWindow::disciplineTableHtml(DisciplineType discipline, bool includeResults) const
@@ -1138,10 +1861,543 @@ QString MainWindow::participantSummaryHtml() const
     return html;
 }
 
+QString MainWindow::fencingGroupListHtml() const
+{
+    QString html = reportHeaderHtml("Fencing Group List");
+
+    QMap<int, QVector<const Competitor *>> groups;
+    QVector<const Competitor *> unassigned;
+    for (const Competitor &competitor : m_eventModel.competitors())
+    {
+        if (!competitorParticipatesInDiscipline(competitor, DisciplineType::Fencing))
+        {
+            continue;
+        }
+
+        if (competitor.fencingGroup > 0)
+        {
+            groups[competitor.fencingGroup].push_back(&competitor);
+        }
+        else
+        {
+            unassigned.push_back(&competitor);
+        }
+    }
+
+    auto groupLabelForIndex = [](int groupIndex) {
+        if (groupIndex <= 0)
+        {
+            return QString("?");
+        }
+
+        QString label;
+        int value = groupIndex;
+        while (value > 0)
+        {
+            const int remainder = (value - 1) % 26;
+            label.prepend(QChar(static_cast<char>('A' + remainder)));
+            value = (value - 1) / 26;
+        }
+        return label;
+    };
+
+    constexpr int maxSectionsPerPage = 4;
+    
+    int sectionsOnCurrentPage = 0;
+    for (auto it = groups.begin(); it != groups.end(); ++it)
+    {
+        QVector<const Competitor *> sorted = it.value();
+        std::sort(sorted.begin(), sorted.end(), [](const Competitor *left, const Competitor *right) {
+            const QString leftName = left->displayName().toLower();
+            const QString rightName = right->displayName().toLower();
+            if (leftName != rightName)
+            {
+                return leftName < rightName;
+            }
+            return left->bib.toLower() < right->bib.toLower();
+        });
+
+        if (sectionsOnCurrentPage >= maxSectionsPerPage)
+        {
+            html += "<div style='page-break-before: always;'></div>";
+            html += reportHeaderHtml("Fencing Group List");
+            sectionsOnCurrentPage = 0;
+        }
+
+        html += QString("<h2>Group %1</h2>").arg(htmlEscape(groupLabelForIndex(it.key())));
+        html += "<table border='1' cellspacing='0' cellpadding='4' width='100%'>";
+        html += "<tr><th>Number</th><th>Name</th><th>Gender</th><th>Category</th><th>Affiliation</th></tr>";
+        for (const Competitor *competitor : sorted)
+        {
+            html += "<tr>";
+            html += QString("<td>%1</td>").arg(htmlEscape(competitor->bib));
+            html += QString("<td>%1</td>").arg(htmlEscape(competitor->displayName()));
+            html += QString("<td>%1</td>").arg(htmlEscape(competitor->gender));
+            html += QString("<td>%1</td>").arg(htmlEscape(competitor->category));
+            html += QString("<td>%1</td>").arg(htmlEscape(competitor->affiliation));
+            html += "</tr>";
+        }
+        html += "</table>";
+        ++sectionsOnCurrentPage;
+    }
+
+    if (!unassigned.isEmpty())
+    {
+        std::sort(unassigned.begin(), unassigned.end(), [](const Competitor *left, const Competitor *right) {
+            const QString leftName = left->displayName().toLower();
+            const QString rightName = right->displayName().toLower();
+            if (leftName != rightName)
+            {
+                return leftName < rightName;
+            }
+            return left->bib.toLower() < right->bib.toLower();
+        });
+
+        if (sectionsOnCurrentPage >= maxSectionsPerPage)
+        {
+            html += "<div style='page-break-before: always;'></div>";
+            html += reportHeaderHtml("Fencing Group List");
+            sectionsOnCurrentPage = 0;
+        }
+
+        html += "<h2>Unassigned</h2>";
+        html += "<table border='1' cellspacing='0' cellpadding='4' width='100%'>";
+        html += "<tr><th>Number</th><th>Name</th><th>Gender</th><th>Category</th><th>Affiliation</th></tr>";
+        for (const Competitor *competitor : unassigned)
+        {
+            html += "<tr>";
+            html += QString("<td>%1</td>").arg(htmlEscape(competitor->bib));
+            html += QString("<td>%1</td>").arg(htmlEscape(competitor->displayName()));
+            html += QString("<td>%1</td>").arg(htmlEscape(competitor->gender));
+            html += QString("<td>%1</td>").arg(htmlEscape(competitor->category));
+            html += QString("<td>%1</td>").arg(htmlEscape(competitor->affiliation));
+            html += "</tr>";
+        }
+        html += "</table>";
+    }
+
+    return html;
+}
+
+QString MainWindow::fencingRoundSheetsHtml() const
+{
+    QString html;
+    if (m_fencingGroupTab == nullptr)
+    {
+        html += reportHeaderHtml("Fencing Round Sheets");
+        html += "<p>Fencing groups are not available for this event.</p>";
+        return html;
+    }
+
+    const QVector<FencingRoundScheduleRow> scheduleRows = m_fencingGroupTab->roundScheduleRows();
+    if (scheduleRows.isEmpty())
+    {
+        html += reportHeaderHtml("Fencing Round Sheets");
+        html += "<p>No round schedule is available. Please assign fencing groups first.</p>";
+        return html;
+    }
+
+    QMap<int, QVector<const Competitor *>> groups;
+    for (const Competitor &competitor : m_eventModel.competitors())
+    {
+        if (!competitorParticipatesInDiscipline(competitor, DisciplineType::Fencing) || competitor.fencingGroup <= 0)
+        {
+            continue;
+        }
+        groups[competitor.fencingGroup].push_back(&competitor);
+    }
+
+    auto groupLabelForIndex = [](int groupIndex) {
+        if (groupIndex <= 0)
+        {
+            return QString("?");
+        }
+
+        QString label;
+        int value = groupIndex;
+        while (value > 0)
+        {
+            const int remainder = (value - 1) % 26;
+            label.prepend(QChar(static_cast<char>('A' + remainder)));
+            value = (value - 1) / 26;
+        }
+        return label;
+    };
+
+    QMap<QString, QString> fencerNameByDescriptor;
+    for (auto it = groups.begin(); it != groups.end(); ++it)
+    {
+        QVector<const Competitor *> sorted = it.value();
+        std::sort(sorted.begin(), sorted.end(), [](const Competitor *left, const Competitor *right) {
+            const QString leftName = left->displayName().toLower();
+            const QString rightName = right->displayName().toLower();
+            if (leftName != rightName)
+            {
+                return leftName < rightName;
+            }
+            return left->bib.toLower() < right->bib.toLower();
+        });
+
+        const QString groupLabel = groupLabelForIndex(it.key());
+        for (int index = 0; index < sorted.size(); ++index)
+        {
+            const QString descriptor = QString("%1%2").arg(groupLabel).arg(index + 1);
+            fencerNameByDescriptor.insert(
+                descriptor,
+                QString("%1 (%2)").arg(sorted.at(index)->displayName(), sorted.at(index)->bib));
+        }
+    }
+
+    QStringList pageKeysInOrder;
+    QMap<QString, QVector<FencingRoundScheduleRow>> scheduleRowsByPage;
+    for (const FencingRoundScheduleRow &scheduleRow : scheduleRows)
+    {
+        const QString pageKey = QString("%1|%2").arg(scheduleRow.round).arg(scheduleRow.piste);
+        if (!scheduleRowsByPage.contains(pageKey))
+        {
+            pageKeysInOrder.push_back(pageKey);
+        }
+        scheduleRowsByPage[pageKey].push_back(scheduleRow);
+    }
+
+    int pageIndex = 0;
+    for (const QString &pageKey : pageKeysInOrder)
+    {
+        const QVector<FencingRoundScheduleRow> pageRows = scheduleRowsByPage.value(pageKey);
+        if (pageRows.isEmpty())
+        {
+            continue;
+        }
+
+        const int roundNumber = pageRows.first().round;
+        const int pisteNumber = pageRows.first().piste;
+        QStringList matchupLabels;
+        for (const FencingRoundScheduleRow &pageRow : pageRows)
+        {
+            if (!matchupLabels.contains(pageRow.matchup))
+            {
+                matchupLabels.push_back(pageRow.matchup);
+            }
+        }
+
+        if (pageIndex > 0)
+        {
+            html += "<div style='page-break-before: always;'></div>";
+        }
+
+        html += reportHeaderHtml("Fencing Round Sheet");
+        html += "<table border='1' cellspacing='0' cellpadding='4' width='100%' style='margin-bottom:10px;'>";
+        html += "<tr>";
+        html += QString("<td width='33%%'><strong>Round #</strong><br>%1</td>")
+            .arg(roundNumber == 0 ? "0 (Intra Group)" : QString::number(roundNumber));
+        html += QString("<td width='34%%'><strong>Groups Fencing</strong><br>%1</td>")
+            .arg(htmlEscape(matchupLabels.join(", ")));
+        html += QString("<td width='33%%'><strong>Piste Name</strong><br>Piste %1</td>")
+            .arg(pisteNumber);
+        html += "</tr>";
+        html += "</table>";
+
+        html += "<table border='1' cellspacing='0' cellpadding='4' width='100%' style='margin-bottom:12px;'>";
+        html += "<tr><th width='8%'>#</th><th>Name</th><th width='10%'>Score</th><th width='10%'>Score</th><th>Name</th></tr>";
+        QVector<QString> fencerDescriptorsInOrder;
+        
+        int boutNumber = 1;
+        for (const FencingRoundScheduleRow &pageRow : pageRows)
+        {
+            const QStringList boutEntries = pageRow.bouts.split(',', Qt::SkipEmptyParts);
+            for (const QString &entry : boutEntries)
+            {
+                const QString trimmed = entry.trimmed();
+                if (trimmed.isEmpty())
+                {
+                    continue;
+                }
+
+                const QStringList pair = trimmed.split('-', Qt::KeepEmptyParts);
+                QString leftDescriptor = trimmed;
+                QString rightDescriptor = QString();
+                if (pair.size() >= 2)
+                {
+                    leftDescriptor = pair.at(0).trimmed();
+                    rightDescriptor = pair.at(1).trimmed();
+                }
+
+                if (!leftDescriptor.isEmpty() && !fencerDescriptorsInOrder.contains(leftDescriptor))
+                {
+                    fencerDescriptorsInOrder.push_back(leftDescriptor);
+                }
+                if (!rightDescriptor.isEmpty() && !fencerDescriptorsInOrder.contains(rightDescriptor))
+                {
+                    fencerDescriptorsInOrder.push_back(rightDescriptor);
+                }
+
+                const QString leftName = fencerNameByDescriptor.value(leftDescriptor, leftDescriptor);
+                const QString rightName = fencerNameByDescriptor.value(rightDescriptor, rightDescriptor);
+                html += "<tr>";
+                html += QString("<td align='center'>%1</td>").arg(boutNumber++);
+                html += QString("<td>%1</td>").arg(htmlEscape(leftName));
+                html += "<td>&nbsp;</td>";
+                html += "<td>&nbsp;</td>";
+                html += QString("<td>%1</td>").arg(htmlEscape(rightName));
+                html += "</tr>";
+            }
+        }
+        html += "</table>";
+
+        html += "<table border='1' cellspacing='0' cellpadding='4' width='100%'>";
+        html += "<tr><th>Fencer</th><th width='18%'>Total Hits</th><th width='32%'>Signature</th></tr>";
+        for (const QString &descriptor : fencerDescriptorsInOrder)
+        {
+            html += "<tr>";
+            html += QString("<td>%1</td>").arg(htmlEscape(fencerNameByDescriptor.value(descriptor, descriptor)));
+            html += "<td>&nbsp;</td>";
+            html += "<td>&nbsp;</td>";
+            html += "</tr>";
+        }
+        html += "</table>";
+
+        ++pageIndex;
+    }
+
+    return html;
+}
+
+QString MainWindow::bonusBracketSheetHtml() const
+{
+    QString html = reportHeaderHtml("Bonus Round Bracket Sheet");
+
+    QVector<int> rankedIndexes;
+    if (m_bonusRoundTab != nullptr)
+    {
+        rankedIndexes = m_bonusRoundTab->rankedCompetitorIndexes();
+    }
+    if (rankedIndexes.isEmpty() && m_fencingResultsTab != nullptr)
+    {
+        rankedIndexes = m_fencingResultsTab->rankedCompetitorIndexes();
+    }
+
+    QVector<int> fallback;
+    const QVector<Competitor> competitors = m_eventModel.competitors();
+    for (int index = 0; index < competitors.size(); ++index)
+    {
+        if (competitorParticipatesInDiscipline(competitors.at(index), DisciplineType::Fencing))
+        {
+            fallback.push_back(index);
+        }
+    }
+
+    QVector<int> seeded = rankedIndexes;
+    QSet<int> seen;
+    QVector<int> finalSeeded;
+    for (const int index : seeded)
+    {
+        if (index >= 0 && index < competitors.size() && !seen.contains(index)
+            && competitorParticipatesInDiscipline(competitors.at(index), DisciplineType::Fencing))
+        {
+            finalSeeded.push_back(index);
+            seen.insert(index);
+        }
+    }
+    for (const int index : fallback)
+    {
+        if (!seen.contains(index))
+        {
+            finalSeeded.push_back(index);
+            seen.insert(index);
+        }
+    }
+    if (finalSeeded.size() > 32)
+    {
+        finalSeeded.resize(32);
+    }
+
+    if (finalSeeded.isEmpty())
+    {
+        html += "<p>No fencing participants available for a bonus round bracket.</p>";
+        return html;
+    }
+
+    const int total = finalSeeded.size();
+    int powerOfTwo = 1;
+    while (powerOfTwo < total)
+    {
+        powerOfTwo *= 2;
+    }
+    QVector<int> seedOrder = {1, 2};
+    int currentSize = 2;
+    while (currentSize < powerOfTwo)
+    {
+        const int nextSize = currentSize * 2;
+        QVector<int> expanded;
+        expanded.reserve(nextSize);
+        for (const int seed : seedOrder)
+        {
+            expanded.push_back(seed);
+            expanded.push_back(nextSize + 1 - seed);
+        }
+        seedOrder = expanded;
+        currentSize = nextSize;
+    }
+
+    struct SheetBout
+    {
+        int seedA = 0;
+        int seedB = 0;
+        int winnerSeed = 0;
+        int loserSeed = 0;
+        int knownCompetitorA = -1;
+        int knownCompetitorB = -1;
+    };
+
+    QVector<QVector<SheetBout>> rounds;
+    struct SheetEntrant
+    {
+        int seed = 0;
+        int knownCompetitorIndex = -1;
+    };
+
+    QVector<SheetEntrant> entrants;
+    entrants.reserve(seedOrder.size());
+    for (const int seed : seedOrder)
+    {
+        if (seed > 0 && seed <= total)
+        {
+            entrants.push_back(SheetEntrant{seed, finalSeeded.at(seed - 1)});
+        }
+        else
+        {
+            entrants.push_back(SheetEntrant{0, -1});
+        }
+    }
+
+    while (entrants.size() > 1)
+    {
+        QVector<SheetBout> roundBouts;
+        QVector<SheetEntrant> nextEntrants;
+        roundBouts.reserve(entrants.size() / 2);
+        nextEntrants.reserve(entrants.size() / 2);
+        for (int i = 0; i + 1 < entrants.size(); i += 2)
+        {
+            const SheetEntrant entrantA = entrants.at(i);
+            const SheetEntrant entrantB = entrants.at(i + 1);
+            const int seedA = entrantA.seed;
+            const int seedB = entrantB.seed;
+            int winnerSeed = 0;
+            int loserSeed = 0;
+            int knownWinnerCompetitor = -1;
+            if (seedA == 0 && seedB == 0)
+            {
+                winnerSeed = 0;
+                loserSeed = 0;
+            }
+            else if (seedA == 0)
+            {
+                winnerSeed = seedB;
+                loserSeed = 0;
+                knownWinnerCompetitor = entrantB.knownCompetitorIndex;
+            }
+            else if (seedB == 0)
+            {
+                winnerSeed = seedA;
+                loserSeed = 0;
+                knownWinnerCompetitor = entrantA.knownCompetitorIndex;
+            }
+            else
+            {
+                winnerSeed = std::min(seedA, seedB);
+                loserSeed = std::max(seedA, seedB);
+                // Bout to be fenced: winner name not known yet.
+                knownWinnerCompetitor = -1;
+            }
+
+            roundBouts.push_back(SheetBout{
+                seedA,
+                seedB,
+                winnerSeed,
+                loserSeed,
+                entrantA.knownCompetitorIndex,
+                entrantB.knownCompetitorIndex});
+            nextEntrants.push_back(SheetEntrant{winnerSeed, knownWinnerCompetitor});
+        }
+        rounds.push_back(roundBouts);
+        entrants = nextEntrants;
+    }
+
+    html += QString("<p><strong>Bracket size:</strong> %1 (top %2 ranked fencers).</p>")
+        .arg(powerOfTwo)
+        .arg(total);
+    html += "<p style='margin-top:4px;'>Fill in names and scores as bouts are fenced. Seed labels carry forward by branch.</p>";
+
+    html += "<table border='1' cellspacing='0' cellpadding='3' width='100%'><tr>";
+    for (int roundIndex = 0; roundIndex < rounds.size(); ++roundIndex)
+    {
+        const int entrantsInRound = powerOfTwo / (1 << roundIndex);
+        html += QString("<th>Round of %1</th>").arg(entrantsInRound);
+    }
+    html += "</tr><tr>";
+
+    for (int roundIndex = 0; roundIndex < rounds.size(); ++roundIndex)
+    {
+        html += "<td valign='top'><table width='100%' cellspacing='0' cellpadding='4'>";
+        const QVector<SheetBout> &roundBouts = rounds.at(roundIndex);
+        for (const SheetBout &bout : roundBouts)
+        {
+            const QString seedAText = bout.seedA > 0 ? QString::number(bout.seedA) : QString("BYE");
+            const QString seedBText = bout.seedB > 0 ? QString::number(bout.seedB) : QString("BYE");
+            const bool hasBye = (bout.seedA <= 0 || bout.seedB <= 0);
+            const QString knownNameA = (bout.knownCompetitorA >= 0 && bout.knownCompetitorA < competitors.size())
+                ? competitors.at(bout.knownCompetitorA).displayName()
+                : QString();
+            const QString knownNameB = (bout.knownCompetitorB >= 0 && bout.knownCompetitorB < competitors.size())
+                ? competitors.at(bout.knownCompetitorB).displayName()
+                : QString();
+
+            html += "<tr><td style='border:1px solid #d9d9d9;'>";
+            html += "<div style='min-height:56px; font-size:10pt;'>";
+            html += QString("<div style='border-bottom:1px solid #bdbdbd; padding-bottom:2px; margin-bottom:2px;'>"
+                            "<strong>(%1)</strong> %2<span style='display:inline-block; width:160px;'>&nbsp;</span>"
+                            "<span style='display:inline-block; width:14px; height:14px; border:1px solid #444;'>&nbsp;</span>"
+                            "</div>")
+                .arg(htmlEscape(seedAText))
+                .arg(htmlEscape(knownNameA.isEmpty() ? "" : knownNameA + " "));
+
+            if (hasBye)
+            {
+                html += QString("<div style='padding-top:2px;'>"
+                                "<strong>(%1)</strong> %2<span style='display:inline-block; width:160px;'>&nbsp;</span>"
+                                "<span style='display:inline-block; width:14px; height:14px; border:1px solid #444;'>&nbsp;</span>"
+                                "</div>")
+                    .arg(htmlEscape(seedBText))
+                    .arg(htmlEscape(knownNameB.isEmpty() ? "" : knownNameB + " "));
+            }
+            else
+            {
+                html += QString("<div style='padding-top:2px;'>"
+                                "<strong>(%1)</strong> %2<span style='display:inline-block; width:160px;'>&nbsp;</span>"
+                                "<span style='display:inline-block; width:14px; height:14px; border:1px solid #444;'>&nbsp;</span>"
+                                "</div>")
+                    .arg(htmlEscape(seedBText))
+                    .arg(htmlEscape(knownNameB.isEmpty() ? "" : knownNameB + " "));
+            }
+            html += "</div>";
+            html += "</td></tr>";
+
+            if (roundIndex < rounds.size() - 1)
+            {
+                html += "<tr><td style='height:16px; border:0;'>&nbsp;</td></tr>";
+            }
+        }
+        html += "</table></td>";
+    }
+    html += "</tr></table>";
+
+    return html;
+}
+
 QString MainWindow::finalResultsHtml() const
 {
     const DivisionSelection selection = m_eventModel.divisionSelection();
-    const QVector<Competitor> ranked = m_eventModel.rankedCompetitors(selection);
+    const QVector<Competitor> ranked = rankedCompetitorsForFinalResults(selection);
     const EventDetails &details = m_eventModel.eventDetails();
     const QList<DisciplineType> selectedDisciplines = m_eventModel.eventDetails().selectedDisciplines.isEmpty()
         ? allDisciplines()
@@ -1301,6 +2557,14 @@ void MainWindow::saveState() const
         competitorsArray.push_back(competitorToJson(competitor));
     }
     root.insert("competitors", competitorsArray);
+    root.insert("bonusRoundEnabled", m_bonusRoundEnabled);
+    root.insert("fencingPairLimit", std::clamp(m_fencingPairLimit, 1, 10));
+    QJsonObject bonusPlacingsObject;
+    for (auto it = m_bonusRoundPlacingsByBib.cbegin(); it != m_bonusRoundPlacingsByBib.cend(); ++it)
+    {
+        bonusPlacingsObject.insert(it.key(), it.value());
+    }
+    root.insert("bonusRoundPlacingsByBib", bonusPlacingsObject);
 
     QFile file(stateFilePath());
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
@@ -1374,6 +2638,21 @@ void MainWindow::loadState()
     const QJsonObject divisionObject = root.value("divisionSelection").toObject();
     divisionSelection.primary = divisionFromInt(divisionObject.value("primary").toInt());
     divisionSelection.secondary = divisionFromInt(divisionObject.value("secondary").toInt());
+    m_bonusRoundEnabled = root.value("bonusRoundEnabled").toBool(root.value("rankingRoundEnabled").toBool(false));
+    m_fencingPairLimit = std::clamp(root.value("fencingPairLimit").toInt(1), 1, 10);
+    m_bonusRoundPlacingsByBib.clear();
+    const QJsonObject bonusPlacingsObject = root.value("bonusRoundPlacingsByBib").toObject();
+    for (auto it = bonusPlacingsObject.begin(); it != bonusPlacingsObject.end(); ++it)
+    {
+        if (it.value().isDouble())
+        {
+            m_bonusRoundPlacingsByBib.insert(it.key(), it.value().toInt());
+        }
+    }
+    if (!m_bonusRoundPlacingsByBib.isEmpty())
+    {
+        m_bonusRoundEnabled = true;
+    }
 
     m_eventModel.setEventDetails(details);
     m_eventModel.setCompetitors(competitors);

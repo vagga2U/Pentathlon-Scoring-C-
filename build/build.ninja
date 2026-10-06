@@ -108,6 +108,22 @@ build CMakeFiles/PentathlonEventManager.dir/src/fencinggrouptab.cpp.obj: CXX_COM
   OBJECT_DIR = CMakeFiles\PentathlonEventManager.dir
   OBJECT_FILE_DIR = CMakeFiles\PentathlonEventManager.dir\src
 
+build CMakeFiles/PentathlonEventManager.dir/src/fencingresultstab.cpp.obj: CXX_COMPILER__PentathlonEventManager_unscanned_ C$:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon$ Tools/Application/Pentathlon$ Scoring$ C++/src/fencingresultstab.cpp || cmake_object_order_depends_target_PentathlonEventManager
+  DEFINES = -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NO_DEBUG -DQT_PRINTSUPPORT_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64
+  DEP_FILE = CMakeFiles\PentathlonEventManager.dir\src\fencingresultstab.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -I"C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/include" -I"C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/src" -isystem C:/Qt/6.7.3/mingw_64/include/QtWidgets -isystem C:/Qt/6.7.3/mingw_64/include -isystem C:/Qt/6.7.3/mingw_64/include/QtCore -isystem C:/Qt/6.7.3/mingw_64/mkspecs/win32-g++ -isystem C:/Qt/6.7.3/mingw_64/include/QtGui -isystem C:/Qt/6.7.3/mingw_64/include/QtPrintSupport
+  OBJECT_DIR = CMakeFiles\PentathlonEventManager.dir
+  OBJECT_FILE_DIR = CMakeFiles\PentathlonEventManager.dir\src
+
+build CMakeFiles/PentathlonEventManager.dir/src/bonusroundtab.cpp.obj: CXX_COMPILER__PentathlonEventManager_unscanned_ C$:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon$ Tools/Application/Pentathlon$ Scoring$ C++/src/bonusroundtab.cpp || cmake_object_order_depends_target_PentathlonEventManager
+  DEFINES = -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NO_DEBUG -DQT_PRINTSUPPORT_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64
+  DEP_FILE = CMakeFiles\PentathlonEventManager.dir\src\bonusroundtab.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -I"C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/include" -I"C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/src" -isystem C:/Qt/6.7.3/mingw_64/include/QtWidgets -isystem C:/Qt/6.7.3/mingw_64/include -isystem C:/Qt/6.7.3/mingw_64/include/QtCore -isystem C:/Qt/6.7.3/mingw_64/mkspecs/win32-g++ -isystem C:/Qt/6.7.3/mingw_64/include/QtGui -isystem C:/Qt/6.7.3/mingw_64/include/QtPrintSupport
+  OBJECT_DIR = CMakeFiles\PentathlonEventManager.dir
+  OBJECT_FILE_DIR = CMakeFiles\PentathlonEventManager.dir\src
+
 build CMakeFiles/PentathlonEventManager.dir/src/finalresultstab.cpp.obj: CXX_COMPILER__PentathlonEventManager_unscanned_ C$:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon$ Tools/Application/Pentathlon$ Scoring$ C++/src/finalresultstab.cpp || cmake_object_order_depends_target_PentathlonEventManager
   DEFINES = -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NO_DEBUG -DQT_PRINTSUPPORT_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64
   DEP_FILE = CMakeFiles\PentathlonEventManager.dir\src\finalresultstab.cpp.obj.d
@@ -132,7 +148,7 @@ build CMakeFiles/PentathlonEventManager.dir/src/mainwindow.cpp.obj: CXX_COMPILER
 #############################################
 # Link the executable PentathlonEventManager.exe
 
-build PentathlonEventManager.exe: CXX_EXECUTABLE_LINKER__PentathlonEventManager_ CMakeFiles/PentathlonEventManager.dir/PentathlonEventManager_autogen/mocs_compilation.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/main.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/eventmodel.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/csvimporter.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/ruleset.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/setuptab.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/disciplinetab.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/fencinggrouptab.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/finalresultstab.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/mainwindow.cpp.obj | C$:/Qt/6.7.3/mingw_64/lib/libQt6PrintSupport.a C$:/Qt/6.7.3/mingw_64/lib/libQt6Widgets.a C$:/Qt/6.7.3/mingw_64/lib/libQt6Gui.a C$:/Qt/6.7.3/mingw_64/lib/libQt6Core.a C$:/Qt/6.7.3/mingw_64/lib/libQt6EntryPoint.a || PentathlonEventManager_autogen PentathlonEventManager_autogen_timestamp_deps
+build PentathlonEventManager.exe: CXX_EXECUTABLE_LINKER__PentathlonEventManager_ CMakeFiles/PentathlonEventManager.dir/PentathlonEventManager_autogen/mocs_compilation.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/main.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/eventmodel.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/csvimporter.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/ruleset.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/setuptab.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/disciplinetab.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/fencinggrouptab.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/fencingresultstab.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/bonusroundtab.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/finalresultstab.cpp.obj CMakeFiles/PentathlonEventManager.dir/src/mainwindow.cpp.obj | C$:/Qt/6.7.3/mingw_64/lib/libQt6PrintSupport.a C$:/Qt/6.7.3/mingw_64/lib/libQt6Widgets.a C$:/Qt/6.7.3/mingw_64/lib/libQt6Gui.a C$:/Qt/6.7.3/mingw_64/lib/libQt6Core.a C$:/Qt/6.7.3/mingw_64/lib/libQt6EntryPoint.a || PentathlonEventManager_autogen PentathlonEventManager_autogen_timestamp_deps
   LINK_FLAGS = -mwindows
   LINK_LIBRARIES = C:/Qt/6.7.3/mingw_64/lib/libQt6PrintSupport.a  C:/Qt/6.7.3/mingw_64/lib/libQt6Widgets.a  C:/Qt/6.7.3/mingw_64/lib/libQt6Gui.a  C:/Qt/6.7.3/mingw_64/lib/libQt6Core.a  -lmpr  -luserenv  -lmingw32  C:/Qt/6.7.3/mingw_64/lib/libQt6EntryPoint.a  -lshell32  -ld3d11  -ldxgi  -ldxguid  -ld3d12  -lcomdlg32  -lwinspool  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\PentathlonEventManager.dir

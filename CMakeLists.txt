@@ -31,6 +31,10 @@ add_executable(PentathlonEventManager WIN32
     src/disciplinetab.cpp
     src/fencinggrouptab.h
     src/fencinggrouptab.cpp
+    src/fencingresultstab.h
+    src/fencingresultstab.cpp
+    src/bonusroundtab.h
+    src/bonusroundtab.cpp
     src/finalresultstab.h
     src/finalresultstab.cpp
     src/mainwindow.h
