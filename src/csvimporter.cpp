@@ -1,5 +1,6 @@
 #include "csvimporter.h"
 
+#include <QDate>
 #include <QFile>
 #include <QTextStream>
 
@@ -69,6 +70,24 @@ QString valueForHeaders(const QStringList &headers, const QStringList &values, c
     return {};
 }
 
+bool parseBooleanFlag(const QString &value, bool defaultValue)
+{
+    const QString normalized = value.trimmed().toLower();
+    if (normalized.isEmpty())
+    {
+        return defaultValue;
+    }
+    if (normalized == "1" || normalized == "true" || normalized == "yes" || normalized == "y")
+    {
+        return true;
+    }
+    if (normalized == "0" || normalized == "false" || normalized == "no" || normalized == "n")
+    {
+        return false;
+    }
+    return defaultValue;
+}
+
 }
 
 CsvImportResult CsvImporter::importEntries(const QString &filePath) const
@@ -127,13 +146,34 @@ CsvImportResult CsvImporter::importEntries(const QString &filePath) const
             }
         }
 
-        const QString dobString = valueForHeaders(headers, values, {"dob", "dateofbirth", "birthdate"});
-        if (!dobString.isEmpty())
+        const QString birthYearString = valueForHeaders(headers, values, {"birthyear", "birthyr", "yob", "yearofbirth"});
+        if (!birthYearString.isEmpty())
         {
-            competitor.dateOfBirth = QDate::fromString(dobString, Qt::ISODate);
-            if (!competitor.dateOfBirth.isValid())
+            bool yearOk = false;
+            const int parsedBirthYear = birthYearString.toInt(&yearOk);
+            if (yearOk && parsedBirthYear >= 1900 && parsedBirthYear <= 2200)
             {
-                competitor.dateOfBirth = QDate::fromString(dobString, "dd/MM/yyyy");
+                competitor.birthYear = parsedBirthYear;
+            }
+            else
+            {
+                result.warnings.push_back(QString("Line %1 has invalid birth year '%2'.").arg(lineNumber).arg(birthYearString));
+            }
+        }
+        else
+        {
+            const QString dobString = valueForHeaders(headers, values, {"dob", "dateofbirth", "birthdate"});
+            if (!dobString.isEmpty())
+            {
+                QDate parsedDob = QDate::fromString(dobString, Qt::ISODate);
+                if (!parsedDob.isValid())
+                {
+                    parsedDob = QDate::fromString(dobString, "dd/MM/yyyy");
+                }
+                if (parsedDob.isValid())
+                {
+                    competitor.birthYear = parsedDob.year();
+                }
             }
         }
 
@@ -142,6 +182,30 @@ CsvImportResult CsvImporter::importEntries(const QString &filePath) const
             result.warnings.push_back(QString("Skipped line %1 because no competitor name was found.").arg(lineNumber));
             continue;
         }
+
+        const QString categoryOverrideValue = valueForHeaders(headers, values, {"categoryoverride", "category_override", "manualcategory", "manual_category"});
+        const QString normalizedOverride = categoryOverrideValue.trimmed().toLower();
+        if (!normalizedOverride.isEmpty())
+        {
+            competitor.categoryOverride = (normalizedOverride == "1" || normalizedOverride == "true" || normalizedOverride == "yes" || normalizedOverride == "y");
+        }
+        else
+        {
+            competitor.categoryOverride = false;
+        }
+
+        competitor.disciplineParticipation.insert(
+            DisciplineType::Fencing,
+            parseBooleanFlag(valueForHeaders(headers, values, {"fenceenabled", "fencingenabled", "fence", "fencing"}), true));
+        competitor.disciplineParticipation.insert(
+            DisciplineType::Obstacle,
+            parseBooleanFlag(valueForHeaders(headers, values, {"obstacleenabled", "ocrenabled", "obstacle", "ocr"}), true));
+        competitor.disciplineParticipation.insert(
+            DisciplineType::Swimming,
+            parseBooleanFlag(valueForHeaders(headers, values, {"swimenabled", "swimmingenabled", "swim", "swimming"}), true));
+        competitor.disciplineParticipation.insert(
+            DisciplineType::LaserRun,
+            parseBooleanFlag(valueForHeaders(headers, values, {"laserrunenabled", "laserenabled", "laserrun", "laser"}), true));
 
         const QString obstacleTime = valueForHeaders(headers, values, {"ocrtime", "ocr", "obstacletime", "obstacle"});
         if (!obstacleTime.isEmpty())

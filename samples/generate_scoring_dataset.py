@@ -82,12 +82,42 @@ LASER_TIME_OFFSETS_MS = {
 }
 
 
+COMPETITION_YEAR = 2026
+
+
 def age_for(category: str) -> int:
     if category.startswith("U"):
         return int(category[1:])
     if category.endswith("+"):
         return int(category[:-1])
     return 18
+
+
+def birth_year_for_category(category: str) -> int:
+    category = category.upper()
+    if category == "U9":
+        return COMPETITION_YEAR - 8
+    if category == "U11":
+        return COMPETITION_YEAR - 10
+    if category == "U13":
+        return COMPETITION_YEAR - 12
+    if category == "U15":
+        return COMPETITION_YEAR - 14
+    if category == "U17":
+        return COMPETITION_YEAR - 16
+    if category == "U19":
+        return COMPETITION_YEAR - 18
+    if category == "30+":
+        return COMPETITION_YEAR - 35
+    if category == "40+":
+        return COMPETITION_YEAR - 45
+    if category == "50+":
+        return COMPETITION_YEAR - 55
+    if category == "60+":
+        return COMPETITION_YEAR - 65
+    if category == "70+":
+        return COMPETITION_YEAR - 74
+    return COMPETITION_YEAR - 18
 
 
 def swim_time_for_category(category: str, gender: str, label: str) -> str:
@@ -128,13 +158,7 @@ def build_rows():
             first = FIRST_NAMES[gender][(pattern_index + age_for(category)) % len(FIRST_NAMES[gender])]
             last = LAST_NAMES[(age_for(category) + pattern_index + len(category)) % len(LAST_NAMES)]
             affiliation = ["North", "South", "East", "West", "Central"][pattern_index % 5]
-            dob = "2010-01-01"
-            if category.startswith("U"):
-                age_years = 18 - age_for(category)
-                dob = f"20{(age_years + 7):02d}-0{(pattern_index % 6) + 1:1d}-10"
-            else:
-                base_year = 2000 - age_for(category)
-                dob = f"{base_year + pattern_index}-05-15"
+            birth_year = birth_year_for_category(category)
 
             rows.append({
                 "bib": bib,
@@ -143,7 +167,7 @@ def build_rows():
                 "gender": gender,
                 "category": category,
                 "affiliation": f"Club-{affiliation}",
-                "dob": dob,
+                "birth_year": birth_year,
                 "ocr_time": pattern["obstacle"],
                 "swim_time": swim_time_for_category(category, gender, pattern["label"]),
                 "laser_run_time": laser_time_for_category(category, pattern["label"]),
@@ -161,7 +185,7 @@ def main():
         "gender",
         "category",
         "affiliation",
-        "dob",
+        "birth_year",
         "ocr_time",
         "swim_time",
         "laser_run_time",

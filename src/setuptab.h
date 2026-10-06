@@ -10,6 +10,7 @@
 #include <QLineEdit>
 #include <QMap>
 #include <QPushButton>
+#include <QSpinBox>
 #include <QTableWidget>
 #include <QWidget>
 
@@ -28,6 +29,10 @@ signals:
     void eventDetailsSubmitted(const EventDetails &details);
     void importEntriesRequested(const QString &csvPath);
     void manualCompetitorSubmitted(const Competitor &competitor);
+    void competitorPreviewEdited(int competitorIndex, const Competitor &competitor);
+    void deleteCompetitorsRequested(const QVector<int> &competitorIndexes);
+    void autoAssignNumbersRequested(const QVector<int> &competitorIndexesInViewOrder, int startingNumber);
+    void printParticipantSummaryRequested();
     void exportCsvRequested();
     void clearAllRequested();
 
@@ -36,8 +41,12 @@ private slots:
     void chooseCsv();
     void submitDetails();
     void submitManualCompetitor();
+    void handlePreviewCellChanged(int row, int column);
+    void requestDeleteSelectedRows();
+    void requestAutoAssignNumbers();
 
 private:
+    bool tryParseBirthYear(const QString &text, int *birthYear) const;
     EventDetails currentDetailsFromForm() const;
     Competitor currentManualCompetitorFromForm() const;
     void clearManualCompetitorForm();
@@ -52,8 +61,12 @@ private:
     QLineEdit *m_manualFirstNameEdit = nullptr;
     QLineEdit *m_manualLastNameEdit = nullptr;
     QLineEdit *m_manualGenderEdit = nullptr;
-    QLineEdit *m_manualCategoryEdit = nullptr;
+    QComboBox *m_manualCategoryOverrideCombo = nullptr;
     QLineEdit *m_manualAffiliationEdit = nullptr;
-    QDateEdit *m_manualDobEdit = nullptr;
+    QSpinBox *m_manualBirthYearSpin = nullptr;
+    QSpinBox *m_autoNumberStartSpin = nullptr;
     QTableWidget *m_previewTable = nullptr;
+    QVector<Competitor> m_previewCompetitors;
+    bool m_updatingPreview = false;
+    int m_eventYear = QDate::currentDate().year();
 };

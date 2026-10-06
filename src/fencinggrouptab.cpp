@@ -50,6 +50,11 @@ void FencingGroupTab::populate(const QVector<Competitor> &competitors)
     QVector<const Competitor *> unassigned;
     for (const Competitor &competitor : competitors)
     {
+        if (!competitorParticipatesInDiscipline(competitor, DisciplineType::Fencing))
+        {
+            continue;
+        }
+
         if (competitor.fencingGroup > 0)
         {
             groups[competitor.fencingGroup].push_back(&competitor);

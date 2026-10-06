@@ -1,38 +1,73 @@
 # ninja log v6
-1464	5628	8084189514740150	CMakeFiles/PentathlonEventManager.dir/PentathlonEventManager_autogen/mocs_compilation.cpp.obj	45e3fb5d55613062
+2003	8250	8129545366470814	CMakeFiles/PentathlonEventManager.dir/PentathlonEventManager_autogen/mocs_compilation.cpp.obj	45e3fb5d55613062
 501	5530	8084122222821868	CMakeFiles/PentathlonEventManager.dir/src/ruleset.cpp.obj	f1111e359de03978
-7769	9684	8128900258029054	PentathlonEventManager.exe	739e30ba8394149b
-105	1167	8128900181396505	PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
-1192	7769	8128900192265655	CMakeFiles/PentathlonEventManager.dir/src/main.cpp.obj	6e893f2e61b0fcdc
-1851	9113	8084163652263287	CMakeFiles/PentathlonEventManager.dir/src/eventmodel.cpp.obj	2a1d1eccdeca3abc
-509	4295	8084196306422144	CMakeFiles/PentathlonEventManager.dir/src/setuptab.cpp.obj	b52c324d42015711
-1893	9133	8084163652688845	CMakeFiles/PentathlonEventManager.dir/src/finalresultstab.cpp.obj	d76dfcf94b39a3ad
-105	1167	8128900181396505	PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
-105	1167	8128900181396505	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
-1860	9073	8084163652349216	CMakeFiles/PentathlonEventManager.dir/src/csvimporter.cpp.obj	480dc099601b6b00
-519	3759	8084196306510793	CMakeFiles/PentathlonEventManager.dir/src/disciplinetab.cpp.obj	99d2c644bf39574a
-105	1167	8128900181396505	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
-527	5689	8084196306594670	CMakeFiles/PentathlonEventManager.dir/src/mainwindow.cpp.obj	2c7b6baa49c72f8b
-143	2772	8129516759254041	PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
-143	2772	8129516759254041	PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
-143	2772	8129516759254041	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
-143	2772	8129516759254041	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
-2792	11698	8129516761336986	CMakeFiles/PentathlonEventManager.dir/src/main.cpp.obj	6e893f2e61b0fcdc
-2846	11705	8129516761878817	CMakeFiles/PentathlonEventManager.dir/src/disciplinetab.cpp.obj	99d2c644bf39574a
-2872	11710	8129516762136791	CMakeFiles/PentathlonEventManager.dir/src/finalresultstab.cpp.obj	d76dfcf94b39a3ad
-2821	11769	8129516761636738	CMakeFiles/PentathlonEventManager.dir/src/csvimporter.cpp.obj	480dc099601b6b00
-2804	11848	8129516761457252	CMakeFiles/PentathlonEventManager.dir/src/eventmodel.cpp.obj	2a1d1eccdeca3abc
-2859	12109	8129516762008843	CMakeFiles/PentathlonEventManager.dir/src/fencinggrouptab.cpp.obj	6f28a5eca41efcce
-2779	12175	8129516761208362	CMakeFiles/PentathlonEventManager.dir/PentathlonEventManager_autogen/mocs_compilation.cpp.obj	45e3fb5d55613062
-2834	12651	8129516761758827	CMakeFiles/PentathlonEventManager.dir/src/setuptab.cpp.obj	b52c324d42015711
-2886	15165	8129516762271490	CMakeFiles/PentathlonEventManager.dir/src/mainwindow.cpp.obj	2c7b6baa49c72f8b
-15165	16707	8129516885068903	PentathlonEventManager.exe	56d85656da4e5fc2
-67	1669	8129520791494207	PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
-67	1669	8129520791494207	PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
-67	1669	8129520791494207	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
-67	1669	8129520791494207	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
-1686	6746	8129520793517828	CMakeFiles/PentathlonEventManager.dir/src/main.cpp.obj	6e893f2e61b0fcdc
-1674	6958	8129520793404594	CMakeFiles/PentathlonEventManager.dir/PentathlonEventManager_autogen/mocs_compilation.cpp.obj	45e3fb5d55613062
-1696	6960	8129520793617208	CMakeFiles/PentathlonEventManager.dir/src/fencinggrouptab.cpp.obj	6f28a5eca41efcce
-1708	9397	8129520793738204	CMakeFiles/PentathlonEventManager.dir/src/mainwindow.cpp.obj	2c7b6baa49c72f8b
-9398	10721	8129520870632747	PentathlonEventManager.exe	56d85656da4e5fc2
+54818	57712	8129541924746399	PentathlonEventManager.exe	56d85656da4e5fc2
+116	1997	8129545364257204	PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
+8250	13014	8129545428945843	CMakeFiles/PentathlonEventManager.dir/src/main.cpp.obj	6e893f2e61b0fcdc
+13015	17990	8129545476587311	CMakeFiles/PentathlonEventManager.dir/src/eventmodel.cpp.obj	2a1d1eccdeca3abc
+17991	24418	8129545526343274	CMakeFiles/PentathlonEventManager.dir/src/setuptab.cpp.obj	b52c324d42015711
+39720	44635	8129541773754124	CMakeFiles/PentathlonEventManager.dir/src/finalresultstab.cpp.obj	d76dfcf94b39a3ad
+116	1997	8129545364257204	PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
+116	1997	8129545364257204	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
+19306	23921	8129541569618297	CMakeFiles/PentathlonEventManager.dir/src/csvimporter.cpp.obj	480dc099601b6b00
+30123	34564	8129541677783626	CMakeFiles/PentathlonEventManager.dir/src/disciplinetab.cpp.obj	99d2c644bf39574a
+34564	39719	8129541722201889	CMakeFiles/PentathlonEventManager.dir/src/fencinggrouptab.cpp.obj	6f28a5eca41efcce
+24419	34389	8129545590630059	CMakeFiles/PentathlonEventManager.dir/src/mainwindow.cpp.obj	2c7b6baa49c72f8b
+116	1997	8129545364257204	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
+78	3001	8129545817210665	PentathlonEventManager.exe	56d85656da4e5fc2
+55	681	8129547152047580	PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
+55	681	8129547152047580	PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
+55	681	8129547152047580	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
+55	681	8129547152047580	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
+686	7300	8129547158357191	CMakeFiles/PentathlonEventManager.dir/src/setuptab.cpp.obj	b52c324d42015711
+70	3024	8129547306572626	PentathlonEventManager.exe	56d85656da4e5fc2
+55	2061	8129548366688435	PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
+55	2061	8129548366688435	PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
+55	2061	8129548366688435	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
+55	2061	8129548366688435	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
+2067	8301	8129548369158756	CMakeFiles/PentathlonEventManager.dir/PentathlonEventManager_autogen/mocs_compilation.cpp.obj	45e3fb5d55613062
+8301	13191	8129548431498733	CMakeFiles/PentathlonEventManager.dir/src/main.cpp.obj	6e893f2e61b0fcdc
+13192	19815	8129548480407029	CMakeFiles/PentathlonEventManager.dir/src/setuptab.cpp.obj	b52c324d42015711
+19815	29770	8129548546643866	CMakeFiles/PentathlonEventManager.dir/src/mainwindow.cpp.obj	2c7b6baa49c72f8b
+29770	32973	8129548646193109	PentathlonEventManager.exe	56d85656da4e5fc2
+73	655	8129550341338708	PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
+73	655	8129550341338708	PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
+73	655	8129550341338708	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
+73	655	8129550341338708	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
+659	7645	8129550347202047	CMakeFiles/PentathlonEventManager.dir/src/setuptab.cpp.obj	b52c324d42015711
+7645	10763	8129550417054280	PentathlonEventManager.exe	56d85656da4e5fc2
+178	2790	8129555704891913	PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
+178	2790	8129555704891913	PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
+178	2790	8129555704891913	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
+178	2790	8129555704891913	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
+2796	9135	8129555707452321	CMakeFiles/PentathlonEventManager.dir/PentathlonEventManager_autogen/mocs_compilation.cpp.obj	45e3fb5d55613062
+9136	14236	8129555770842496	CMakeFiles/PentathlonEventManager.dir/src/main.cpp.obj	6e893f2e61b0fcdc
+14237	19883	8129555821859574	CMakeFiles/PentathlonEventManager.dir/src/eventmodel.cpp.obj	2a1d1eccdeca3abc
+19884	25170	8129555878334588	CMakeFiles/PentathlonEventManager.dir/src/csvimporter.cpp.obj	480dc099601b6b00
+25170	32330	8129555931190370	CMakeFiles/PentathlonEventManager.dir/src/setuptab.cpp.obj	b52c324d42015711
+32331	37307	8129556002795649	CMakeFiles/PentathlonEventManager.dir/src/disciplinetab.cpp.obj	99d2c644bf39574a
+37308	42633	8129556052569429	CMakeFiles/PentathlonEventManager.dir/src/fencinggrouptab.cpp.obj	6f28a5eca41efcce
+42634	47429	8129556105823548	CMakeFiles/PentathlonEventManager.dir/src/finalresultstab.cpp.obj	d76dfcf94b39a3ad
+47429	57790	8129556153784024	CMakeFiles/PentathlonEventManager.dir/src/mainwindow.cpp.obj	2c7b6baa49c72f8b
+57792	61517	8129556257399781	PentathlonEventManager.exe	56d85656da4e5fc2
+162	1016	8129561137012430	PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
+162	1016	8129561137012430	PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
+162	1016	8129561137012430	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
+162	1016	8129561137012430	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
+1023	13379	8129561145604487	CMakeFiles/PentathlonEventManager.dir/src/mainwindow.cpp.obj	2c7b6baa49c72f8b
+81	3896	8129561365293433	PentathlonEventManager.exe	56d85656da4e5fc2
+131	2356	8129564593188288	PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
+131	2356	8129564593188288	PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
+131	2356	8129564593188288	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
+131	2356	8129564593188288	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
+2363	8607	8129564596399850	CMakeFiles/PentathlonEventManager.dir/PentathlonEventManager_autogen/mocs_compilation.cpp.obj	45e3fb5d55613062
+8608	13766	8129564658858375	CMakeFiles/PentathlonEventManager.dir/src/main.cpp.obj	6e893f2e61b0fcdc
+13767	20775	8129564710446345	CMakeFiles/PentathlonEventManager.dir/src/setuptab.cpp.obj	b52c324d42015711
+20776	30763	8129564780538825	CMakeFiles/PentathlonEventManager.dir/src/mainwindow.cpp.obj	2c7b6baa49c72f8b
+30764	34505	8129564880413781	PentathlonEventManager.exe	56d85656da4e5fc2
+93	548	8129589184520510	PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
+93	548	8129589184520510	PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
+93	548	8129589184520510	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/timestamp	df0482e7728d33a2
+93	548	8129589184520510	C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/PentathlonEventManager_autogen/mocs_compilation.cpp	df0482e7728d33a2
+552	5934	8129589189104808	CMakeFiles/PentathlonEventManager.dir/src/mainwindow.cpp.obj	2c7b6baa49c72f8b
+46	2650	8129589471905902	PentathlonEventManager.exe	56d85656da4e5fc2

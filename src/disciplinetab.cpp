@@ -91,11 +91,20 @@ void DisciplineTab::populate(const QVector<Competitor> &competitors)
 {
     m_updating = true;
     configureColumns();
-    m_table->setRowCount(competitors.size());
-
-    for (int row = 0; row < competitors.size(); ++row)
+    m_rowToCompetitorIndex.clear();
+    for (int index = 0; index < competitors.size(); ++index)
     {
-        const Competitor &competitor = competitors.at(row);
+        if (competitorParticipatesInDiscipline(competitors.at(index), m_discipline))
+        {
+            m_rowToCompetitorIndex.push_back(index);
+        }
+    }
+
+    m_table->setRowCount(m_rowToCompetitorIndex.size());
+
+    for (int row = 0; row < m_rowToCompetitorIndex.size(); ++row)
+    {
+        const Competitor &competitor = competitors.at(m_rowToCompetitorIndex.at(row));
         const LaneAssignment assignment = competitor.laneAssignments.value(m_discipline);
         const QString rawResult = competitor.rawResults.value(m_discipline);
         const QString penalty = competitor.penalties.value(m_discipline);
@@ -147,6 +156,13 @@ void DisciplineTab::handleCellChanged(int row, int column)
         return;
     }
 
+    if (row < 0 || row >= m_rowToCompetitorIndex.size())
+    {
+        return;
+    }
+
+    const int competitorIndex = m_rowToCompetitorIndex.at(row);
+
     if (column == 0 || column == 1)
     {
         bool heatOk = false;
@@ -155,21 +171,21 @@ void DisciplineTab::handleCellChanged(int row, int column)
         const QString laneText = m_table->item(row, 1) != nullptr ? m_table->item(row, 1)->text().trimmed() : QString();
         const int heat = heatText.isEmpty() ? 0 : heatText.toInt(&heatOk);
         const int lane = laneText.isEmpty() ? 0 : laneText.toInt(&laneOk);
-        emit laneAssignmentChanged(m_discipline, row, (heatText.isEmpty() || heatOk) ? heat : 0, (laneText.isEmpty() || laneOk) ? lane : 0);
+        emit laneAssignmentChanged(m_discipline, competitorIndex, (heatText.isEmpty() || heatOk) ? heat : 0, (laneText.isEmpty() || laneOk) ? lane : 0);
         return;
     }
 
     if (column == 6)
     {
         QTableWidgetItem *item = m_table->item(row, column);
-        emit rawResultChanged(m_discipline, row, item != nullptr ? item->text() : QString());
+        emit rawResultChanged(m_discipline, competitorIndex, item != nullptr ? item->text() : QString());
         return;
     }
 
     if (column == 7)
     {
         QTableWidgetItem *item = m_table->item(row, column);
-        emit penaltyChanged(m_discipline, row, item != nullptr ? item->text() : QString());
+        emit penaltyChanged(m_discipline, competitorIndex, item != nullptr ? item->text() : QString());
     }
 }
 

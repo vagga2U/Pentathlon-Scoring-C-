@@ -23,12 +23,16 @@ private slots:
     void applyEventDetails(const EventDetails &details);
     void importEntries(const QString &csvPath);
     void addManualCompetitor(const Competitor &competitor);
+    void updateCompetitorFromPreview(int competitorIndex, const Competitor &competitor);
+    void deleteCompetitorsFromPreview(const QVector<int> &competitorIndexes);
+    void autoAssignNumbersFromPreview(const QVector<int> &competitorIndexesInViewOrder, int startingNumber);
     void assignHeats(DisciplineType discipline, int lanesPerHeat);
     void autoAssignFencingGroups(int numberPistes);
     void updateLaneAssignment(DisciplineType discipline, int competitorIndex, int heat, int lane);
     void updateRawResult(DisciplineType discipline, int competitorIndex, const QString &rawResult);
     void updatePenalty(DisciplineType discipline, int competitorIndex, const QString &penalty);
     void recalculateDiscipline(DisciplineType discipline);
+    void printParticipantSummaryPdf();
     void printBlankSheet(DisciplineType discipline);
     void printDisciplineResults(DisciplineType discipline);
     void printFinalResults();
@@ -40,6 +44,7 @@ private:
     const Ruleset *currentRuleset() const;
     void refreshDisciplineTabs();
     QString disciplineTableHtml(DisciplineType discipline, bool includeResults) const;
+    QString participantSummaryHtml() const;
     QString finalResultsHtml() const;
     QString reportHeaderHtml(const QString &title) const;
     void printHtmlDocument(const QString &title, const QString &html) const;

@@ -17,6 +17,9 @@
 #include <QTextDocument>
 #include <QTextStream>
 #include <QUrl>
+#include <QSet>
+#include <QPageLayout>
+#include <QPageSize>
 
 #include <algorithm>
 #include <cstdlib>
@@ -232,9 +235,17 @@ QJsonObject competitorToJson(const Competitor &competitor)
     object.insert("lastName", competitor.lastName);
     object.insert("gender", competitor.gender);
     object.insert("category", competitor.category);
+    object.insert("categoryOverride", competitor.categoryOverride);
     object.insert("affiliation", competitor.affiliation);
-    object.insert("dateOfBirth", competitor.dateOfBirth.isValid() ? competitor.dateOfBirth.toString(Qt::ISODate) : QString());
+    object.insert("birthYear", competitor.birthYear);
     object.insert("fencingGroup", competitor.fencingGroup);
+
+    QJsonObject participationObject;
+    for (const DisciplineType discipline : allDisciplines())
+    {
+        participationObject.insert(disciplineKey(discipline), competitorParticipatesInDiscipline(competitor, discipline));
+    }
+    object.insert("disciplineParticipation", participationObject);
 
     QJsonObject lanesObject;
     for (auto it = competitor.laneAssignments.cbegin(); it != competitor.laneAssignments.cend(); ++it)
@@ -278,9 +289,28 @@ Competitor competitorFromJson(const QJsonObject &object)
     competitor.lastName = object.value("lastName").toString();
     competitor.gender = object.value("gender").toString();
     competitor.category = object.value("category").toString();
+    competitor.categoryOverride = object.value("categoryOverride").toBool(false);
     competitor.affiliation = object.value("affiliation").toString();
-    competitor.dateOfBirth = QDate::fromString(object.value("dateOfBirth").toString(), Qt::ISODate);
+    competitor.birthYear = object.value("birthYear").toInt();
+    if (competitor.birthYear <= 0)
+    {
+        const QDate legacyDob = QDate::fromString(object.value("dateOfBirth").toString(), Qt::ISODate);
+        if (legacyDob.isValid())
+        {
+            competitor.birthYear = legacyDob.year();
+        }
+    }
     competitor.fencingGroup = object.value("fencingGroup").toInt();
+
+    const QJsonObject participationObject = object.value("disciplineParticipation").toObject();
+    for (const DisciplineType discipline : allDisciplines())
+    {
+        const QString key = disciplineKey(discipline);
+        if (participationObject.contains(key))
+        {
+            competitor.disciplineParticipation.insert(discipline, participationObject.value(key).toBool(true));
+        }
+    }
 
     const QJsonObject lanesObject = object.value("laneAssignments").toObject();
     for (auto it = lanesObject.begin(); it != lanesObject.end(); ++it)
@@ -360,6 +390,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_setupTab, &SetupTab::eventDetailsSubmitted, this, &MainWindow::applyEventDetails);
     connect(m_setupTab, &SetupTab::importEntriesRequested, this, &MainWindow::importEntries);
     connect(m_setupTab, &SetupTab::manualCompetitorSubmitted, this, &MainWindow::addManualCompetitor);
+    connect(m_setupTab, &SetupTab::competitorPreviewEdited, this, &MainWindow::updateCompetitorFromPreview);
+    connect(m_setupTab, &SetupTab::deleteCompetitorsRequested, this, &MainWindow::deleteCompetitorsFromPreview);
+    connect(m_setupTab, &SetupTab::autoAssignNumbersRequested, this, &MainWindow::autoAssignNumbersFromPreview);
+    connect(m_setupTab, &SetupTab::printParticipantSummaryRequested, this, &MainWindow::printParticipantSummaryPdf);
     connect(m_setupTab, &SetupTab::exportCsvRequested, this, &MainWindow::exportEventCsv);
     connect(m_setupTab, &SetupTab::clearAllRequested, this, &MainWindow::clearEventData);
     connect(&m_eventModel, &EventModel::changed, this, &MainWindow::refreshViews);
@@ -411,6 +445,64 @@ void MainWindow::addManualCompetitor(const Competitor &competitor)
     }
 
     m_eventModel.addCompetitor(competitor);
+}
+
+void MainWindow::updateCompetitorFromPreview(int competitorIndex, const Competitor &competitor)
+{
+    m_eventModel.updateCompetitor(competitorIndex, competitor);
+    recalculateCompetitorScores(competitorIndex);
+}
+
+void MainWindow::deleteCompetitorsFromPreview(const QVector<int> &competitorIndexes)
+{
+    if (competitorIndexes.isEmpty())
+    {
+        return;
+    }
+
+    QVector<Competitor> competitors = m_eventModel.competitors();
+    QSet<int> uniqueIndexes;
+    for (const int competitorIndex : competitorIndexes)
+    {
+        if (competitorIndex >= 0 && competitorIndex < competitors.size())
+        {
+            uniqueIndexes.insert(competitorIndex);
+        }
+    }
+
+    if (uniqueIndexes.isEmpty())
+    {
+        return;
+    }
+
+    const auto response = QMessageBox::question(
+        this,
+        "Delete Competitors",
+        QString("Delete %1 selected competitor(s)?").arg(uniqueIndexes.size()),
+        QMessageBox::Yes | QMessageBox::Cancel,
+        QMessageBox::Cancel);
+    if (response != QMessageBox::Yes)
+    {
+        return;
+    }
+
+    QVector<int> sortedIndexes = uniqueIndexes.values().toVector();
+    std::sort(sortedIndexes.begin(), sortedIndexes.end(), std::greater<int>());
+    for (const int index : sortedIndexes)
+    {
+        competitors.removeAt(index);
+    }
+
+    m_eventModel.setCompetitors(competitors);
+}
+
+void MainWindow::autoAssignNumbersFromPreview(const QVector<int> &competitorIndexesInViewOrder, int startingNumber)
+{
+    const QString assignmentError = m_eventModel.autoAssignBibNumbers(competitorIndexesInViewOrder, startingNumber);
+    if (!assignmentError.isEmpty())
+    {
+        QMessageBox::warning(this, "Auto Assign Numbers", assignmentError);
+    }
 }
 
 void MainWindow::assignHeats(DisciplineType discipline, int lanesPerHeat)
@@ -472,6 +564,11 @@ void MainWindow::updatePenalty(DisciplineType discipline, int competitorIndex, c
 
 int MainWindow::computedScoreForCompetitor(const Competitor &competitor, DisciplineType discipline, const DisciplineRule *rule) const
 {
+    if (!competitorParticipatesInDiscipline(competitor, discipline))
+    {
+        return 0;
+    }
+
     if (competitorHasDsq(competitor))
     {
         return 0;
@@ -587,6 +684,41 @@ void MainWindow::printFinalResults()
     printHtmlDocument("Final Results", finalResultsHtml());
 }
 
+void MainWindow::printParticipantSummaryPdf()
+{
+    const EventDetails &details = m_eventModel.eventDetails();
+    QString defaultName = details.eventName.trimmed();
+    if (defaultName.isEmpty())
+    {
+        defaultName = "participant-summary";
+    }
+    defaultName = defaultName.toLower().replace(' ', '-');
+    const QString datedName = QString("%1-%2-participant-summary.pdf")
+        .arg(defaultName, details.eventDate.isValid() ? details.eventDate.toString("yyyyMMdd") : QDate::currentDate().toString("yyyyMMdd"));
+
+    const QString outputPath = QFileDialog::getSaveFileName(
+        this,
+        "Export Participant Summary PDF",
+        QDir::home().filePath(datedName),
+        "PDF Files (*.pdf)");
+    if (outputPath.trimmed().isEmpty())
+    {
+        return;
+    }
+
+    QPrinter printer;
+    printer.setOutputFormat(QPrinter::PdfFormat);
+    printer.setPageSize(QPageSize(QPageSize::A4));
+    printer.setPageMargins(QMarginsF(10, 12, 10, 12), QPageLayout::Millimeter);
+    printer.setOutputFileName(outputPath);
+
+    QTextDocument document;
+    document.setHtml(participantSummaryHtml());
+    document.print(&printer);
+
+    QMessageBox::information(this, "Participant Summary PDF", QString("Participant summary exported to:\n%1").arg(outputPath));
+}
+
 void MainWindow::exportEventCsv()
 {
     const EventDetails &details = m_eventModel.eventDetails();
@@ -619,7 +751,8 @@ void MainWindow::exportEventCsv()
     QTextStream stream(&file);
 
     QStringList headers = {
-        "event_name", "event_date", "ruleset", "number", "first_name", "last_name", "gender", "category", "affiliation", "dob"
+        "event_name", "event_date", "ruleset", "number", "first_name", "last_name", "gender", "birth_year", "category", "category_override", "affiliation",
+        "fence_enabled", "obstacle_enabled", "swim_enabled", "laser_run_enabled"
     };
     const QList<DisciplineType> disciplines = allDisciplines();
     for (const DisciplineType discipline : disciplines)
@@ -644,9 +777,14 @@ void MainWindow::exportEventCsv()
             csvEscape(competitor.firstName),
             csvEscape(competitor.lastName),
             csvEscape(competitor.gender),
+            csvEscape(competitor.birthYear > 0 ? QString::number(competitor.birthYear) : QString()),
             csvEscape(competitor.category),
+            csvEscape(competitor.categoryOverride ? "1" : "0"),
             csvEscape(competitor.affiliation),
-            csvEscape(competitor.dateOfBirth.isValid() ? competitor.dateOfBirth.toString(Qt::ISODate) : QString())
+            csvEscape(competitorParticipatesInDiscipline(competitor, DisciplineType::Fencing) ? "1" : "0"),
+            csvEscape(competitorParticipatesInDiscipline(competitor, DisciplineType::Obstacle) ? "1" : "0"),
+            csvEscape(competitorParticipatesInDiscipline(competitor, DisciplineType::Swimming) ? "1" : "0"),
+            csvEscape(competitorParticipatesInDiscipline(competitor, DisciplineType::LaserRun) ? "1" : "0")
         };
 
         for (const DisciplineType discipline : disciplines)
@@ -792,6 +930,11 @@ QString MainWindow::disciplineTableHtml(DisciplineType discipline, bool includeR
     QVector<const Competitor *> unassigned;
     for (const Competitor &competitor : m_eventModel.competitors())
     {
+        if (!competitorParticipatesInDiscipline(competitor, discipline))
+        {
+            continue;
+        }
+
         const LaneAssignment assignment = competitor.laneAssignments.value(discipline);
         if (assignment.heat <= 0)
         {
@@ -960,6 +1103,38 @@ QString MainWindow::disciplineTableHtml(DisciplineType discipline, bool includeR
         html += "</table>";
     }
 
+    return html;
+}
+
+QString MainWindow::participantSummaryHtml() const
+{
+    QString html = reportHeaderHtml("Participant Summary");
+    html += "<table border='1' cellspacing='0' cellpadding='4' width='100%'>";
+    html += "<tr><th>Number</th><th>Name</th><th>Gender</th><th>Birth Year</th><th>Category</th><th>Affiliation</th><th>Fence</th><th>Obstacle</th><th>Swim</th><th>Laser Run</th></tr>";
+
+    auto participationCellHtml = [](bool enabled) {
+        return enabled
+            ? QString("<td style='background-color:#d4edda; color:#155724; text-align:center; font-weight:600;'>Yes</td>")
+            : QString("<td style='background-color:#f8d7da; color:#721c24; text-align:center; font-weight:600;'>No</td>");
+    };
+
+    for (const Competitor &competitor : m_eventModel.competitors())
+    {
+        html += "<tr>";
+        html += QString("<td>%1</td>").arg(htmlEscape(competitor.bib));
+        html += QString("<td>%1</td>").arg(htmlEscape(competitor.displayName()));
+        html += QString("<td>%1</td>").arg(htmlEscape(competitor.gender));
+        html += QString("<td>%1</td>").arg(competitor.birthYear > 0 ? QString::number(competitor.birthYear) : "&nbsp;");
+        html += QString("<td>%1</td>").arg(htmlEscape(competitor.category));
+        html += QString("<td>%1</td>").arg(htmlEscape(competitor.affiliation));
+        html += participationCellHtml(competitorParticipatesInDiscipline(competitor, DisciplineType::Fencing));
+        html += participationCellHtml(competitorParticipatesInDiscipline(competitor, DisciplineType::Obstacle));
+        html += participationCellHtml(competitorParticipatesInDiscipline(competitor, DisciplineType::Swimming));
+        html += participationCellHtml(competitorParticipatesInDiscipline(competitor, DisciplineType::LaserRun));
+        html += "</tr>";
+    }
+
+    html += "</table>";
     return html;
 }
 

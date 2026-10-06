@@ -7,6 +7,7 @@
 #include <QPushButton>
 #include <QSpinBox>
 #include <QTableWidget>
+#include <QVector>
 #include <QWidget>
 
 class DisciplineTab : public QWidget
@@ -40,5 +41,6 @@ private:
     QLabel *m_ruleSummaryLabel = nullptr;
     QSpinBox *m_lanesSpin = nullptr;
     QTableWidget *m_table = nullptr;
+    QVector<int> m_rowToCompetitorIndex;
     bool m_updating = false;
 };
