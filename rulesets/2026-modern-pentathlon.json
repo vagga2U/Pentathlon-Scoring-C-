@@ -1,0 +1,53 @@
+{
+  "id": "modern-pentathlon-2026",
+  "name": "Modern Pentathlon 2026",
+  "description": "UIPM 2026 scoring baseline using Competition Rules + Equipment Regulations (2026): Obstacle Appendix 3B1, Swimming Appendix 4B2, Laser Run Appendix 5B1, and Laser Run Art. 5.5 rounding.",
+  "disciplines": [
+    {
+      "discipline": "fencing",
+      "inputLabel": "Points",
+      "measurementHint": "Manual scoring (2026 Art. 2.5 uses bout-victory tables by field size)",
+      "scoringKind": "manual",
+      "minimumPoints": 0
+    },
+    {
+      "discipline": "obstacle",
+      "inputLabel": "Time",
+      "measurementHint": "mm:ss.hh (rounded down to .00/.33/.66, Art. 3.5.8 + Appendix 3B1)",
+      "scoringKind": "linear_time",
+      "referenceMilliseconds": 65000,
+      "referencePoints": 250,
+      "millisecondsPerPoint": 330,
+      "higherIsBetter": false,
+      "timeRounding": "down_to_third_step",
+      "minimumPoints": 0,
+      "maximumPoints": 400
+    },
+    {
+      "discipline": "swimming",
+      "inputLabel": "Time",
+      "measurementHint": "mm:ss.hh (rounded down to 0.2s, Appendix 4B2; 1:10.00 = 250)",
+      "scoringKind": "linear_time",
+      "referenceMilliseconds": 70000,
+      "referencePoints": 250,
+      "millisecondsPerPoint": 200,
+      "higherIsBetter": false,
+      "timeRounding": "down_to_two_tenths",
+      "minimumPoints": 0,
+      "maximumPoints": 375
+    },
+    {
+      "discipline": "laser_run",
+      "inputLabel": "Time",
+      "measurementHint": "mm:ss (rounded down to second, Art. 5.5 + Appendix 5B1; 13:20 = 500)",
+      "scoringKind": "linear_time",
+      "referenceMilliseconds": 800000,
+      "referencePoints": 500,
+      "millisecondsPerPoint": 1000,
+      "higherIsBetter": false,
+      "timeRounding": "down_to_second",
+      "minimumPoints": 0,
+      "maximumPoints": 700
+    }
+  ]
+}

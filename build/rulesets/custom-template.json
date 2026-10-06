@@ -1,0 +1,48 @@
+{
+  "id": "custom-template",
+  "name": "Custom Template",
+  "description": "Example ruleset showing how to define manual, linear time, and placement-table scoring.",
+  "disciplines": [
+    {
+      "discipline": "fencing",
+      "inputLabel": "Seed / place",
+      "measurementHint": "Placement table example",
+      "scoringKind": "placement_table",
+      "minimumPoints": 0,
+      "placementPoints": [
+        { "place": 1, "points": 250 },
+        { "place": 2, "points": 240 },
+        { "place": 3, "points": 230 }
+      ]
+    },
+    {
+      "discipline": "obstacle",
+      "inputLabel": "Time",
+      "measurementHint": "mm:ss.zz",
+      "scoringKind": "linear_time",
+      "referenceMilliseconds": 35000,
+      "referencePoints": 250,
+      "millisecondsPerPoint": 200,
+      "higherIsBetter": false,
+      "minimumPoints": 0
+    },
+    {
+      "discipline": "swimming",
+      "inputLabel": "Time",
+      "measurementHint": "mm:ss.zz",
+      "scoringKind": "linear_time",
+      "referenceMilliseconds": 150000,
+      "referencePoints": 250,
+      "millisecondsPerPoint": 500,
+      "higherIsBetter": false,
+      "minimumPoints": 0
+    },
+    {
+      "discipline": "laser_run",
+      "inputLabel": "Points",
+      "measurementHint": "Manual total until a ruleset is configured",
+      "scoringKind": "manual",
+      "minimumPoints": 0
+    }
+  ]
+}

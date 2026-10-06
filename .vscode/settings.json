@@ -1,0 +1,10 @@
+{
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+  "cmake.configureOnOpen": true,
+  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "makefile.configureOnOpen": false,
+  "code-runner.executorMapByFileExtension": {
+    ".h": "echo Header files are not runnable. Build the project with CMake Tools."
+  }
+}

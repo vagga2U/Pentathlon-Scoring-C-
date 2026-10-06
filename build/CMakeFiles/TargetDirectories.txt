@@ -1,0 +1,5 @@
+C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/CMakeFiles/PentathlonEventManager.dir
+C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/CMakeFiles/edit_cache.dir
+C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/CMakeFiles/rebuild_cache.dir
+C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/CMakeFiles/PentathlonEventManager_autogen_timestamp_deps.dir
+C:/Users/aardv/OneDrive/Documents/Pentathlon/Pentathlon Tools/Application/Pentathlon Scoring C++/build/CMakeFiles/PentathlonEventManager_autogen.dir

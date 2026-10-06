@@ -1,0 +1,62 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake: Configure",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-S",
+                ".",
+                "-B",
+                "build",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "CMake: Build",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "build",
+                "--config",
+                "Release"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "dependsOn": [
+                "CMake: Configure"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "CMake: Run",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                "if (Test-Path \"${workspaceFolder}\\build\\PentathlonEventManager.exe\") { & \"${workspaceFolder}\\build\\PentathlonEventManager.exe\" } elseif (Test-Path \"${workspaceFolder}\\build\\Release\\PentathlonEventManager.exe\") { & \"${workspaceFolder}\\build\\Release\\PentathlonEventManager.exe\" } else { Write-Error \"Executable not found. Build first with CMake: Build.\"; exit 1 }"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "dependsOn": [
+                "CMake: Build"
+            ],
+            "problemMatcher": []
+        }
+    ]
+}
